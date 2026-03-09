@@ -1,14 +1,17 @@
-"""AgentGlue main runtime — ties all middleware components together."""
+"""AgentGlue main runtime — ties the v0.1 middleware together."""
 
 import functools
+import hashlib
+import json
+import time
 from typing import Any, Callable, Dict
 
+from agentglue.core.allocator import RateLimiter
 from agentglue.core.metrics import GlueMetrics
 from agentglue.core.recorder import EventRecorder
 from agentglue.middleware.dedup import ToolDedup
 from agentglue.middleware.shared_memory import SharedMemory
 from agentglue.middleware.task_lock import TaskLock
-from agentglue.core.allocator import RateLimiter
 
 
 class AgentGlue:
@@ -21,7 +24,6 @@ class AgentGlue:
         def search(query: str) -> str:
             return call_api(query)
 
-        # After agents finish:
         print(glue.report())
     """
 
@@ -62,55 +64,94 @@ class AgentGlue:
         Args:
             name: Override tool name (defaults to function name).
             ttl: Cache TTL in seconds for dedup.
-            rate_limit: Max calls per second (creates rate limiter if not exists).
+            rate_limit: Max calls per second (creates rate limiter if enabled).
         """
+
         def decorator(func: Callable) -> Callable:
             tool_name = name or func.__name__
 
-            # Register rate limit if specified
             if rate_limit is not None and self.rate_limiter:
                 self.rate_limiter.add_tool(tool_name, rate_limit)
 
             @functools.wraps(func)
             def wrapper(*args, agent_id: str = "", **kwargs) -> Any:
-                # 1. Dedup check
+                args_hash = self._hash_call(tool_name, args, kwargs)
+                started = time.monotonic()
+
                 if self.dedup_enabled and self.dedup:
                     entry = self.dedup.lookup(tool_name, args, kwargs)
                     if entry is not None:
-                        self.metrics.record_tool_call(deduped=True, cache_hit=True)
-                        self._record_event("tool_call_deduped", agent_id, tool_name, {
-                            "original_agent": entry.agent_id,
-                        })
+                        observed_ms = (time.monotonic() - started) * 1000.0
+                        self.metrics.record_tool_call(
+                            deduped=True,
+                            cache_hit=True,
+                            latency_ms=observed_ms,
+                        )
+                        self._record_event(
+                            "tool_call_deduped",
+                            agent_id,
+                            tool_name,
+                            {
+                                "args_hash": args_hash,
+                                "original_agent": entry.agent_id,
+                                "cache_age_s": round(entry.age, 6),
+                            },
+                        )
                         return entry.result
 
-                # 2. Rate limit check
                 if self.rate_limiter_enabled and self.rate_limiter:
                     allowed, reason = self.rate_limiter.try_acquire(tool_name)
                     if not allowed:
                         self.metrics.record_rate_limit()
-                        self._record_event("rate_limited", agent_id, tool_name, {"reason": reason})
+                        self._record_event(
+                            "rate_limited",
+                            agent_id,
+                            tool_name,
+                            {"args_hash": args_hash, "reason": reason},
+                        )
                         raise RuntimeError(f"AgentGlue: rate limited ({reason})")
 
-                # 3. Execute the real tool
-                self.metrics.record_tool_call(deduped=False, cache_hit=False)
-                self._record_event("tool_call", agent_id, tool_name)
+                self._record_event("tool_call", agent_id, tool_name, {"args_hash": args_hash})
                 result = func(*args, **kwargs)
+                observed_ms = (time.monotonic() - started) * 1000.0
+                self.metrics.record_tool_call(
+                    deduped=False,
+                    cache_hit=False,
+                    latency_ms=observed_ms,
+                    underlying_latency_ms=observed_ms,
+                )
 
-                # 4. Cache result for dedup
                 if self.dedup_enabled and self.dedup:
                     self.dedup.store(tool_name, args, kwargs, result, agent_id=agent_id, ttl=ttl)
 
-                # 5. Auto-publish to shared memory
                 if self.memory_enabled and self.memory:
-                    mem_key = f"{tool_name}:{hash((args, tuple(sorted(kwargs.items()))))}"
+                    mem_key = f"{tool_name}:{args_hash}"
                     self.memory.write(mem_key, result, agent_id=agent_id)
+                    self.metrics.record_memory_write()
 
+                self._record_event(
+                    "tool_call_completed",
+                    agent_id,
+                    tool_name,
+                    {"args_hash": args_hash, "latency_ms": round(observed_ms, 6)},
+                )
                 return result
 
             wrapper.__wrapped__ = func
             return wrapper
 
         return decorator
+
+    def invalidate(self, tool_name: str, *args, **kwargs) -> bool:
+        """Invalidate a single cached tool result."""
+        if not self.dedup_enabled or not self.dedup:
+            return False
+        return self.dedup.invalidate(tool_name, args=args, kwargs=kwargs)
+
+    def clear_cache(self) -> None:
+        """Clear all cached tool results."""
+        if self.dedup_enabled and self.dedup:
+            self.dedup.clear()
 
     def report(self) -> str:
         return self.metrics.report()
@@ -121,6 +162,7 @@ class AgentGlue:
     def _record_event(self, event_type: str, agent_id: str, tool_name: str, payload: Dict | None = None) -> None:
         if self.recorder:
             from agentglue.core.events import Event
+
             event = Event(
                 event_type=event_type,
                 agent_id=agent_id,
@@ -128,3 +170,8 @@ class AgentGlue:
                 payload=payload or {},
             )
             self.recorder.record(event.to_dict())
+
+    @staticmethod
+    def _hash_call(tool_name: str, args: tuple, kwargs: dict) -> str:
+        raw = json.dumps({"tool": tool_name, "args": list(args), "kwargs": kwargs}, sort_keys=True, default=str)
+        return hashlib.sha256(raw.encode()).hexdigest()

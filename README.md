@@ -1,99 +1,181 @@
 # AgentGlue
 
-> The missing middleware for multi-agent systems. Drop in between your agents and tools — get dedup, shared memory, rate limiting, conflict prevention, and observability for free.
+> Runtime middleware for multi-agent systems — starting with exact-match dedup, TTL caching, and baseline observability for shared tool use.
 
-## The Problem
+## The problem
 
-Multi-agent frameworks (AutoGen, CrewAI, LangGraph) focus on **orchestration** — how agents talk to each other and divide work. But they leave a critical gap: **what happens when multiple agents hit the same tools, fight over the same resources, and do the same work twice?**
+Multi-agent frameworks (AutoGen, CrewAI, LangGraph) are good at orchestration — who does what, in what order. Production waste often happens one layer lower: when multiple agents touch the same tools, APIs, files, and shared state without coordination.
 
-In production multi-agent systems, you will see:
+That creates a predictable set of problems:
+- **Duplicate work** — multiple agents make the same tool calls.
+- **Rate limit storms** — agents independently hammer the same external service.
+- **Memory blindness** — one agent learns something useful, others rediscover it expensively.
+- **Task conflicts** — agents collide on the same file, task, or shared resource.
+- **Observability gaps** — you cannot tell where the waste is coming from.
 
-- **Duplicate work** — Agent A searches for "transformer papers", Agent B searches for "transformer architecture papers" 30 seconds later. Same intent, wasted API call.
-- **Rate limit storms** — 5 agents all hammering the same API, nobody coordinating, everyone getting 429s and retrying at the same time.
-- **Memory blindness** — Agent A discovers a crucial fact, Agent B has no idea and wastes 3 tool calls rediscovering it.
-- **Task conflicts** — Two agents both start writing to the same file, or both claim the same task.
-- **Invisible waste** — No easy way to know how much money and time you're losing to coordination failures.
+## v0.1 scope
 
-## The Solution
+The first usable pass stays intentionally narrow:
+- exact-match tool-call dedup
+- TTL result cache
+- cache invalidation API
+- baseline metrics + event recording
+- simple decorator API
 
-AgentGlue is a **thin runtime layer** that sits between your agent framework and your tools/APIs:
+Shared memory, rate coordination, and task locks are scaffolded in the codebase, but they are **not** the product claim for v0.1.
 
-```
+## Architecture
+
+```text
 Agent Framework (AutoGen / CrewAI / LangGraph / custom)
     |
-[AgentGlue] <-- dedup, shared memory, rate coordination, task locks, observability
+[AgentGlue] <-- dedup, cache, baseline observability
     |
 Tools / APIs
 ```
-
-It is **not** a framework. It does not replace your orchestrator. It makes your existing multi-agent system smarter about shared resources.
 
 ## Quickstart
 
 ```python
 from agentglue import AgentGlue
 
-glue = AgentGlue()
+# Keep v0.1 tight: dedup + cache + observability
+# Disable the other middleware unless you are actively experimenting.
+glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False)
 
-# Wrap your tools — that's it
-@glue.tool()
-def search(query: str) -> str:
-    return call_search_api(query)
+@glue.tool(ttl=300)
+def search_code(query: str) -> str:
+    print(f"real search for: {query}")
+    return f"results for {query}"
 
-# Or wrap at framework level
-from agentglue.integrations import CrewAIMiddleware
-crew = Crew(agents=[...], middleware=[CrewAIMiddleware(glue)])
+print(search_code("rate limiter", agent_id="agent-a"))
+print(search_code("rate limiter", agent_id="agent-b"))  # dedup hit
+print(search_code("cache invalidation", agent_id="agent-c"))
+
+print(glue.report())
 ```
 
-After your agents run, get a report:
+Example output:
 
-```
+```text
+real search for: rate limiter
+real search for: cache invalidation
 AgentGlue Report:
-  Tool calls saved by dedup:  47/120 (39%)
-  Rate limit interventions:   12
-  Task conflicts prevented:   3
-  Shared memory hits:         28
-  Estimated cost saved:       ~$2.40
+  Observed tool calls:      3
+  Underlying executions:    2
+  Calls saved by dedup:     1/3 (33%)
+  Cache hit rate:           33%
+  Avg observed latency:     0.01 ms
+  Avg underlying latency:   0.01 ms
+  Rate limit interventions: 0
+  Shared memory writes:     0
+  Shared memory hits:       0
+  Task conflicts prevented: 0
 ```
 
-## Features
+## API
 
-### v0.1 — Tool Call Dedup + Cache
-- Exact-match and semantic dedup for tool calls across agents
-- Configurable TTL cache with invalidation
-- Zero-config: just wrap your tools
+### Wrap a tool
 
-### v0.2 — Shared Memory
-- Agent A's discoveries are automatically visible to Agent B
-- TTL, confidence scores, and staleness tracking
-- Private vs shared vs team-scoped memory
+```python
+from agentglue import AgentGlue
 
-### v0.3 — Rate Coordination
-- Cross-agent rate limit awareness (shared token bucket)
-- Adaptive backpressure: wait / retry-with-backoff / drop
-- No more synchronized retry storms
+glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False)
 
-### v0.4 — Task Locks & Conflict Prevention
-- Distributed intent declaration ("I'm working on task X")
-- Conflict detection before work starts
-- Optimistic locking for file/resource writes
+@glue.tool(ttl=60)
+def fetch_doc(path: str) -> str:
+    return open(path).read()
+```
 
-### v0.5 — Observability
-- Real-time coordination metrics dashboard
-- Redundancy score, coordination overhead ratio, scaling efficiency
-- JSONL event log for post-hoc analysis
+### Invalidate a single cached result
 
-## Design Principles
+```python
+glue.invalidate("fetch_doc", "README.md")
+```
 
-1. **Zero intrusion** — Works as a decorator or middleware. No changes to your agent logic.
-2. **Framework agnostic** — Works with any Python-based agent system.
-3. **Incremental adoption** — Enable one feature at a time. Each is independently useful.
-4. **Observable by default** — Every intervention is logged and measurable.
-5. **No magic** — Deterministic behavior, no hidden LLM calls, no surprise costs.
+### Clear the cache
 
-## Project Status
+```python
+glue.clear_cache()
+```
 
-Early development. Core dedup and shared memory modules under construction.
+### Access summary metrics programmatically
+
+```python
+summary = glue.summary()
+print(summary["calls_saved"])
+print(summary["cache_hit_rate"])
+```
+
+## What v0.1 measures
+
+- observed tool calls
+- underlying tool executions
+- calls saved by dedup
+- dedup rate
+- cache hit rate
+- average observed latency
+- average underlying latency
+- rate-limit intervention count
+- shared-memory write count
+- task-conflict prevention count
+
+## Current status
+
+**Usable v0.1 path is implemented** for decorator-based dedup + cache + baseline observability.
+
+What is working now:
+- exact-match dedup keyed by tool name + args/kwargs hash
+- TTL expiry
+- cache invalidation and full-cache clearing
+- text report + dict summary
+- event recording for tool calls, dedup hits, and completions
+- smoke tests covering the main path
+
+What remains intentionally deferred:
+- semantic dedup
+- production-grade shared memory
+- real cross-agent rate coordination policy layer
+- task-lock productization
+- framework integration adapters
+
+## Benchmark recommendation
+
+The first benchmark should be **multi-agent repo search / codebase exploration**.
+
+Why:
+- repeated search/read/list calls happen naturally
+- dedup value is obvious and measurable
+- it mirrors real multi-agent coding systems better than toy API spam
+- it avoids the noise of long-horizon autonomous SWE tasks
+
+See [`BENCHMARK_PLAN.md`](./BENCHMARK_PLAN.md) for the concrete plan.
+
+## Design principles
+
+1. **Thin runtime, not a framework**
+2. **Framework agnostic**
+3. **Observable by default**
+4. **Incremental adoption**
+5. **No hidden LLM calls inside middleware**
+
+## Development
+
+Run the smoke tests with:
+
+```bash
+PYTHONPATH=src python3 tests/test_smoke.py
+```
+
+If you have pytest installed:
+
+```bash
+PYTHONPATH=src pytest -q
+```
+
+## Disclaimer
+
+This project is a personal open-source project developed in my personal capacity. It is not affiliated with, endorsed by, or representing any employer or organization I am associated with. All work on this project is performed on personal time and with personal resources.
 
 ## License
 

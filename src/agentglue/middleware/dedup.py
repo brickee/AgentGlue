@@ -1,14 +1,14 @@
 """Tool call deduplication middleware.
 
 Intercepts tool calls and returns cached results when the same tool
-has been called with the same (or semantically similar) arguments.
+has been called with the same arguments.
 """
 
 import hashlib
 import json
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
 
@@ -19,18 +19,22 @@ class CacheEntry:
     ttl: float
     tool_name: str
     args_hash: str
-    agent_id: str  # who originally made the call
+    agent_id: str
 
     @property
     def expired(self) -> bool:
         return (time.monotonic() - self.created_at) > self.ttl
 
+    @property
+    def age(self) -> float:
+        return time.monotonic() - self.created_at
+
 
 class ToolDedup:
     """Deduplicates tool calls across multiple agents.
 
-    Supports exact-match dedup (hash of tool name + serialized args) and
-    optional semantic dedup (embedding similarity, planned for v0.2).
+    v0.1 intentionally stays narrow: exact-match dedup via a stable hash of
+    tool name + serialized args/kwargs with TTL-based caching.
     """
 
     def __init__(self, default_ttl: float = 300.0):
@@ -66,7 +70,7 @@ class ToolDedup:
         entry = CacheEntry(
             result=result,
             created_at=time.monotonic(),
-            ttl=ttl or self.default_ttl,
+            ttl=self.default_ttl if ttl is None else ttl,
             tool_name=tool_name,
             args_hash=key,
             agent_id=agent_id,
@@ -86,7 +90,11 @@ class ToolDedup:
     @property
     def size(self) -> int:
         with self._lock:
-            return len(self._cache)
+            live_keys = [k for k, v in self._cache.items() if not v.expired]
+            stale_keys = [k for k, v in self._cache.items() if v.expired]
+            for k in stale_keys:
+                del self._cache[k]
+            return len(live_keys)
 
     def wrap(
         self,
@@ -98,17 +106,12 @@ class ToolDedup:
         name = tool_name or func.__name__
 
         def wrapper(*args, **kwargs):
-            # Check cache
             entry = self.lookup(name, args, kwargs)
             if entry is not None:
                 return entry.result
 
-            # Call the real tool
             result = func(*args, **kwargs)
-
-            # Store result
             self.store(name, args, kwargs, result, ttl=ttl)
-
             return result
 
         wrapper.__name__ = func.__name__

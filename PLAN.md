@@ -2,32 +2,37 @@
 
 ## North Star
 
-Build a **framework-agnostic runtime middleware** for multi-agent systems that eliminates coordination waste (duplicate work, rate limit storms, memory blindness, task conflicts) with zero intrusion into existing agent logic.
+Build a framework-agnostic runtime middleware for multi-agent systems that eliminates coordination waste around shared tools and state with zero intrusion into existing agent logic.
 
-## Origin
+## v0.1 product claim
 
-This project evolved from AgentGym (a DES multi-agent simulator). Key insight: the coordination problems we were simulating (dedup, rate limiting, shared memory, conflict detection) are better solved as a **runtime layer** than a **simulator**. The simulator can't model LLM behavior, but a middleware doesn't need to — it operates on real tool calls in real time.
+Ship the thinnest version that proves value on the most common, measurable failure mode:
+- duplicate tool calls
+- repeated identical reads/searches
+- invisible coordination waste
 
-Reused from AgentGym:
-- Resource allocator with token bucket rate limiting and backpressure policies
-- Event recording and duplicate detection analytics
-- State validation and lifecycle invariant checking
-- Metrics computation (per-task normalization, communication cost)
-- World state schema (adapted for runtime context)
+For v0.1, the real product surface is:
+- decorator-based tool wrapping
+- exact-match dedup
+- TTL cache
+- invalidation API
+- baseline observability via metrics + event recording
+
+Shared memory, rate coordination, and task locks remain part of the roadmap, but they should not be treated as product-complete in the first release.
 
 ## Architecture
 
-```
+```text
 Agent Framework
     |
     v
 AgentGlue Runtime
-  ├── ToolProxy        — intercepts tool calls, applies dedup + cache
-  ├── SharedMemory     — cross-agent knowledge store with TTL + confidence
-  ├── RateCoordinator  — shared token buckets, adaptive backpressure
-  ├── TaskLock         — intent declaration, conflict detection
-  ├── EventBus         — internal event stream for all components
-  └── Observer         — metrics collection, reporting, JSONL export
+  ├── ToolProxy / decorator — intercepts tool calls, applies dedup + cache
+  ├── EventRecorder         — in-memory event stream for v0.1 observability
+  ├── GlueMetrics           — reports observed calls, underlying executions, cache hit rate
+  ├── SharedMemory          — scaffolded, not a v0.1 claim
+  ├── RateLimiter           — scaffolded, not a v0.1 claim
+  └── TaskLock              — scaffolded, not a v0.1 claim
     |
     v
 Tools / APIs
@@ -35,64 +40,68 @@ Tools / APIs
 
 ## Milestones
 
-### M0 — Project Foundation (Day 1)
+### M0 — Project Foundation
 - [x] Repo scaffolding
 - [x] README with vision and API sketch
 - [x] PLAN.md / PROGRESS.md / NEXT_TODO.md
-- [x] Reuse core modules from AgentGym (allocator, events, validator, metrics, replay)
+- [x] Reuse core modules from AgentGym (allocator, events, recorder, metrics)
 - [x] pyproject.toml + basic package structure
-- [ ] GitHub repo created
 
-### M1 — Tool Call Dedup + Cache (Week 1)
-- [ ] ToolProxy class: decorator-based tool wrapping
-- [ ] Exact-match dedup (hash tool name + args)
-- [ ] TTL-based result cache
-- [ ] Semantic dedup via embedding similarity (optional, requires embedding model)
-- [ ] Cache invalidation API
-- [ ] Metrics: dedup hit rate, cache hit rate, calls saved
-- [ ] Tests + smoke check
+### M1 — v0.1: Dedup + Cache + Baseline Observability
+- [x] Decorator-based tool wrapping as the primary API surface
+- [x] Exact-match dedup (tool name + args/kwargs hash)
+- [x] TTL-based result cache
+- [x] Cache invalidation API
+- [x] Baseline observability enabled by default for the wrapped path
+- [x] Metrics: total tool calls, underlying executions, dedup hit rate, cache hit rate, calls saved, basic latency
+- [x] Summary report generator (text + dict)
+- [x] Smoke tests for the main path
+- [x] README examples aligned with current implementation
 
-### M2 — Shared Memory (Week 2)
-- [ ] SharedMemory store: key-value with metadata (TTL, confidence, source agent)
-- [ ] Auto-publish: tool results optionally broadcast to shared memory
-- [ ] Scoping: private / shared / team
-- [ ] Staleness detection and confidence decay
-- [ ] Metrics: memory hits, misses, stale reads
+### M1.5 — Benchmark & Value Proof
+- [x] Concrete benchmark plan documented
+- [ ] Build a minimal, reproducible benchmark harness around shared-tool multi-agent workloads
+- [ ] Preferred first scenario: multi-agent repo search / codebase exploration
+- [ ] Measure: observed calls, underlying executions, calls saved, wall-clock time, cache hit rate
+- [ ] Publish first benchmark results
+- [ ] Optional second scenario: SWE-style search/read/test loop
+
+### M2 — Shared Memory
+- [ ] Tighten `SharedMemory` semantics (TTL, confidence, scoping)
+- [ ] Decide whether auto-publish should stay default-on or become explicit
+- [ ] Add metrics hooks for reads/writes/hits/misses on the real runtime path
 - [ ] Tests
 
-### M3 — Rate Coordination (Week 3)
-- [ ] RateCoordinator: per-tool shared token bucket across agents
-- [ ] Backpressure policies: wait, retry-with-backoff, drop
-- [ ] Anti-stampede: jittered retry to prevent synchronized retries
-- [ ] Rate limit state sharing across agents
-- [ ] Metrics: interventions, wait time, dropped calls
+### M3 — Rate Coordination
+- [ ] Promote `RateLimiter` into a clearer `RateCoordinator` story if warranted
+- [ ] Shared token buckets across agents
+- [ ] Backpressure policies: wait / retry / drop
+- [ ] Metrics: interventions, wait time
 - [ ] Tests
 
-### M4 — Task Locks & Conflict Prevention (Week 4)
-- [ ] Intent declaration API: agent announces what it's about to do
-- [ ] Conflict detection: warn or block if another agent has same intent
-- [ ] Optimistic locking for resource writes
-- [ ] Dead-intent cleanup (agent crashed without releasing lock)
+### M4 — Task Locks & Conflict Prevention
+- [ ] Intent declaration API
+- [ ] Conflict detection before work starts
+- [ ] Dead-intent cleanup semantics
 - [ ] Metrics: conflicts detected, prevented
 - [ ] Tests
 
-### M5 — Observability & Integrations (Week 5+)
-- [ ] Summary report generator (text + markdown)
-- [ ] JSONL event export for post-hoc analysis
-- [ ] Real-time metrics (optional Prometheus/StatsD export)
-- [ ] CrewAI integration adapter
-- [ ] LangGraph integration adapter
-- [ ] AutoGen integration adapter
-- [ ] Documentation + tutorial
+### M5 — Integrations & Advanced Observability
+- [ ] JSONL event export demo in docs
+- [ ] CrewAI integration adapter skeleton
+- [ ] LangGraph integration adapter skeleton
+- [ ] AutoGen integration adapter skeleton
+- [ ] Richer traces / dashboards only after benchmark proof
 
-## Non-Goals (for now)
-- Not a framework — does not replace AutoGen/CrewAI/LangGraph
-- Not an orchestrator — does not decide task assignment
-- No LLM calls inside the middleware — deterministic behavior only
-- No distributed deployment (single-process first, multi-process later)
+## Non-goals for v0.1
+- Not a new agent framework
+- Not an orchestrator
+- No hidden LLM calls inside middleware
+- No distributed deployment story yet
+- No claim of semantic dedup yet
 
-## Weekly Operating Rules
-1. Each milestone ends with working tests and a smoke check.
-2. Every feature must report its own metrics.
-3. Keep the API surface minimal — decorator + middleware pattern only.
-4. README examples must work as-is (copy-pasteable).
+## Operating rules
+1. Keep the API surface minimal.
+2. Every shipped behavior needs tests.
+3. Docs must match what actually works.
+4. Benchmark before broadening the product story.

@@ -1,12 +1,13 @@
-"""Smoke tests for AgentGlue core functionality."""
+"""Smoke tests for AgentGlue v0.1 core functionality."""
 
 import time
+
 from agentglue import AgentGlue
+from agentglue.core.allocator import RateLimiter
+from agentglue.core.metrics import GlueMetrics
 from agentglue.middleware.dedup import ToolDedup
 from agentglue.middleware.shared_memory import SharedMemory
 from agentglue.middleware.task_lock import TaskLock
-from agentglue.core.allocator import RateLimiter, TokenBucket
-from agentglue.core.metrics import GlueMetrics
 
 
 def test_dedup_exact_match():
@@ -22,17 +23,17 @@ def test_dedup_exact_match():
     wrapped = dedup.wrap(search)
 
     r1 = wrapped("transformers")
-    r2 = wrapped("transformers")  # should be deduped
-    r3 = wrapped("attention")    # different args, should call
+    r2 = wrapped("transformers")
+    r3 = wrapped("attention")
 
     assert r1 == r2 == "result for transformers"
     assert r3 == "result for attention"
-    assert call_count == 2  # only 2 real calls, not 3
+    assert call_count == 2
 
 
 def test_dedup_ttl_expiry():
     """Cache entries expire after TTL."""
-    dedup = ToolDedup(default_ttl=0.1)  # 100ms TTL
+    dedup = ToolDedup(default_ttl=0.1)
     call_count = 0
 
     def search(query):
@@ -43,7 +44,7 @@ def test_dedup_ttl_expiry():
     wrapped = dedup.wrap(search)
     r1 = wrapped("test")
     time.sleep(0.15)
-    r2 = wrapped("test")  # should re-call after TTL
+    r2 = wrapped("test")
 
     assert r1 == "result-1"
     assert r2 == "result-2"
@@ -51,14 +52,12 @@ def test_dedup_ttl_expiry():
 
 
 def test_shared_memory_basic():
-    """Write and read shared memory."""
     mem = SharedMemory()
     mem.write("key1", "value1", agent_id="agent-a")
     assert mem.read("key1", agent_id="agent-b") == "value1"
 
 
 def test_shared_memory_private_scope():
-    """Private memory is only visible to the writer."""
     mem = SharedMemory()
     mem.write("secret", "data", agent_id="agent-a", scope="private")
     assert mem.read("secret", agent_id="agent-a") == "data"
@@ -66,7 +65,6 @@ def test_shared_memory_private_scope():
 
 
 def test_shared_memory_confidence():
-    """Low confidence entries are filtered."""
     mem = SharedMemory(min_confidence=0.5)
     mem.write("key", "value", confidence=0.3)
     assert mem.read("key") is None
@@ -75,7 +73,6 @@ def test_shared_memory_confidence():
 
 
 def test_task_lock_basic():
-    """Task locking prevents conflicts."""
     lock = TaskLock()
     ok1, _ = lock.acquire("task-1", "agent-a")
     ok2, reason = lock.acquire("task-1", "agent-b")
@@ -90,7 +87,6 @@ def test_task_lock_basic():
 
 
 def test_task_lock_reentrant():
-    """Same agent can re-acquire its own lock."""
     lock = TaskLock()
     ok1, _ = lock.acquire("task-1", "agent-a")
     ok2, reason = lock.acquire("task-1", "agent-a")
@@ -100,7 +96,6 @@ def test_task_lock_reentrant():
 
 
 def test_rate_limiter():
-    """Token bucket rate limiting."""
     limiter = RateLimiter(tool_rate_limits={"search": 2.0})
     ok1, _ = limiter.try_acquire("search")
     ok2, _ = limiter.try_acquire("search")
@@ -113,56 +108,74 @@ def test_rate_limiter():
 
 
 def test_rate_limiter_no_limit():
-    """Tools without rate limits always pass."""
     limiter = RateLimiter()
     ok, _ = limiter.try_acquire("any_tool")
     assert ok is True
 
 
 def test_metrics():
-    """Metrics tracking."""
     m = GlueMetrics()
-    m.record_tool_call(deduped=False, cache_hit=False)
-    m.record_tool_call(deduped=True, cache_hit=True)
-    m.record_tool_call(deduped=True, cache_hit=True)
+    m.record_tool_call(deduped=False, cache_hit=False, latency_ms=10.0)
+    m.record_tool_call(deduped=True, cache_hit=True, latency_ms=0.5)
+    m.record_tool_call(deduped=True, cache_hit=True, latency_ms=0.5)
 
     assert m.tool_calls_total == 3
+    assert m.tool_calls_underlying == 1
     assert m.tool_calls_deduped == 2
     assert m.dedup_rate == 2 / 3
     assert m.cache_hits == 2
+    assert m.calls_saved == 2
 
     report = m.report()
     assert "AgentGlue Report" in report
+    assert "Underlying executions" in report
 
 
-def test_glue_integration():
-    """Full integration: AgentGlue decorator with dedup."""
-    glue = AgentGlue(rate_limiter=False, shared_memory=False)
+def test_glue_integration_and_invalidation():
+    glue = AgentGlue(rate_limiter=False, shared_memory=True)
     call_count = 0
 
-    @glue.tool()
+    @glue.tool(ttl=60.0)
     def compute(x):
         nonlocal call_count
         call_count += 1
         return x * 2
 
-    r1 = compute(5)
-    r2 = compute(5)  # deduped
-    r3 = compute(10) # new call
+    r1 = compute(5, agent_id="agent-a")
+    r2 = compute(5, agent_id="agent-b")
+    r3 = compute(10, agent_id="agent-a")
+    invalidated = glue.invalidate("compute", 5)
+    r4 = compute(5, agent_id="agent-c")
 
     assert r1 == 10
     assert r2 == 10
     assert r3 == 20
-    assert call_count == 2
+    assert r4 == 10
+    assert invalidated is True
+    assert call_count == 3
     assert glue.metrics.tool_calls_deduped == 1
+    assert glue.metrics.tool_calls_underlying == 3
+    assert glue.metrics.shared_memory_writes == 3
 
 
-def test_glue_report():
-    """Report generation works."""
-    glue = AgentGlue()
+def test_glue_report_and_events():
+    glue = AgentGlue(shared_memory=False)
+
+    @glue.tool()
+    def lookup(x):
+        return x
+
+    lookup("a", agent_id="agent-a")
+    lookup("a", agent_id="agent-b")
+
     report = glue.report()
     assert "AgentGlue Report" in report
     assert "dedup" in report.lower()
+    assert glue.recorder is not None
+    event_types = [event["event_type"] for event in glue.recorder.events]
+    assert "tool_call" in event_types
+    assert "tool_call_deduped" in event_types
+    assert "tool_call_completed" in event_types
 
 
 if __name__ == "__main__":
@@ -177,13 +190,13 @@ if __name__ == "__main__":
         test_rate_limiter,
         test_rate_limiter_no_limit,
         test_metrics,
-        test_glue_integration,
-        test_glue_report,
+        test_glue_integration_and_invalidation,
+        test_glue_report_and_events,
     ]
-    for t in tests:
+    for test_fn in tests:
         try:
-            t()
-            print(f"  PASS  {t.__name__}")
-        except Exception as e:
-            print(f"  FAIL  {t.__name__}: {e}")
+            test_fn()
+            print(f"  PASS  {test_fn.__name__}")
+        except Exception as exc:
+            print(f"  FAIL  {test_fn.__name__}: {exc}")
     print("SMOKE_CHECK_OK")
