@@ -1,10 +1,12 @@
 """Smoke tests for AgentGlue v0.1 core functionality."""
 
+import threading
 import time
 
 from agentglue import AgentGlue
 from agentglue.core.allocator import RateLimiter
 from agentglue.core.metrics import GlueMetrics
+from agentglue.core.recorder import detect_duplicates
 from agentglue.middleware.dedup import ToolDedup
 from agentglue.middleware.shared_memory import SharedMemory
 from agentglue.middleware.task_lock import TaskLock
@@ -178,6 +180,71 @@ def test_glue_report_and_events():
     assert "tool_call_completed" in event_types
 
 
+def test_detect_duplicates_understands_runtime_dedup_events():
+    glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False)
+
+    @glue.tool(ttl=60.0)
+    def lookup(x):
+        return {"value": x}
+
+    lookup("a", agent_id="agent-a")
+    lookup("a", agent_id="agent-b")
+    lookup("b", agent_id="agent-c")
+
+    events = glue.recorder.events if glue.recorder else []
+    duplicates = detect_duplicates(events)
+
+    assert duplicates["total_duplicates"] == 1
+    assert duplicates["by_tool"] == {"lookup": 1}
+    assert duplicates["by_agent"] == {"agent-b": 1}
+    assert duplicates["duplicate_intents"][0]["deduped_calls"] == 1
+
+
+def test_concurrent_identical_calls_do_not_single_flight_today():
+    glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False, dedup_ttl=60.0)
+    barrier = threading.Barrier(2)
+    call_count = 0
+    call_lock = threading.Lock()
+
+    @glue.tool(ttl=60.0)
+    def slow_lookup(x):
+        nonlocal call_count
+        barrier.wait(timeout=1.0)
+        time.sleep(0.05)
+        with call_lock:
+            call_count += 1
+            current = call_count
+        return f"value-{x}-{current}"
+
+    results = []
+
+    def invoke(agent_id: str) -> None:
+        results.append(slow_lookup("same", agent_id=agent_id))
+
+    threads = [
+        threading.Thread(target=invoke, args=("agent-a",)),
+        threading.Thread(target=invoke, args=("agent-b",)),
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    post_result = slow_lookup("same", agent_id="agent-c")
+
+    assert call_count == 2
+    assert len(results) == 2
+    assert sorted(results) == ["value-same-1", "value-same-2"]
+    assert post_result in results
+    assert glue.metrics.tool_calls_total == 3
+    assert glue.metrics.tool_calls_underlying == 2
+    assert glue.metrics.tool_calls_deduped == 1
+
+    duplicates = detect_duplicates(glue.recorder.events if glue.recorder else [])
+    assert duplicates["total_duplicates"] == 1
+    assert duplicates["by_agent"] == {"agent-c": 1}
+
+
 if __name__ == "__main__":
     tests = [
         test_dedup_exact_match,
@@ -192,6 +259,8 @@ if __name__ == "__main__":
         test_metrics,
         test_glue_integration_and_invalidation,
         test_glue_report_and_events,
+        test_detect_duplicates_understands_runtime_dedup_events,
+        test_concurrent_identical_calls_do_not_single_flight_today,
     ]
     for test_fn in tests:
         try:

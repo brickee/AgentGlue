@@ -151,6 +151,20 @@ Why:
 
 See [`BENCHMARK_PLAN.md`](./BENCHMARK_PLAN.md) for the concrete plan.
 
+Current benchmark harness:
+
+```bash
+PYTHONPATH=src python3 scripts/benchmark_repo_exploration.py --runs 3 --label local_run
+```
+
+That writes stable JSON/JSONL/Markdown artifacts under `artifacts/benchmarks/<label>/`, including:
+- repeated baseline vs AgentGlue runs
+- per-tool summaries
+- recorder-backed duplicate analysis
+- a concurrent identical-call probe
+
+Current concurrency caveat: exact-match dedup works once a result is already cached, but the concurrent probe shows AgentGlue does **not** yet coalesce in-flight identical calls.
+
 ## Design principles
 
 1. **Thin runtime, not a framework**

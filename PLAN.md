@@ -60,11 +60,14 @@ Tools / APIs
 
 ### M1.5 — Benchmark & Value Proof
 - [x] Concrete benchmark plan documented
-- [ ] Build a minimal, reproducible benchmark harness around shared-tool multi-agent workloads
-- [ ] Preferred first scenario: multi-agent repo search / codebase exploration
-- [ ] Measure: observed calls, underlying executions, calls saved, wall-clock time, cache hit rate
-- [ ] Publish first benchmark results
+- [x] Build a minimal, reproducible benchmark harness around shared-tool multi-agent workloads
+- [x] Preferred first scenario: multi-agent repo search / codebase exploration
+- [x] Measure: observed calls, underlying executions, calls saved, wall-clock time, cache hit rate
+- [x] Publish first benchmark results
+- [x] Add recorder analysis that matches runtime dedup events (`tool_call_deduped`)
+- [x] Add a concurrent identical-call probe to test cache-vs-coalescing behavior
 - [ ] Optional second scenario: SWE-style search/read/test loop
+- [ ] Decide whether single-flight coalescing belongs in the near-term core path
 
 ### M2 — Shared Memory
 - [ ] Tighten `SharedMemory` semantics (TTL, confidence, scoping)

@@ -179,7 +179,7 @@
     "mode": "baseline",
     "observed_tool_calls": 20,
     "underlying_executions": 20,
-    "wall_clock_ms": 191.704,
+    "wall_clock_ms": 181.154,
     "observed_calls": [
       {
         "agent_id": "agent-a",
@@ -386,7 +386,7 @@
           "max_entries": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && find \"src/agentgym/core\" -type f | sed 's#^./##' | sort | head -n 20",
-        "elapsed_ms": 21.848,
+        "elapsed_ms": 11.997,
         "output_preview": "src/agentgym/core/__pycache__/allocator.cpython-312.pyc\nsrc/agentgym/core/__pycache__/events.cpython-312.pyc\nsrc/agentgym/core/__pycache__/replay.cpython-312.pyc\nsrc/agentgym/core/__pycache__/simulator.cpython-312.pyc\nsrc/agentgym/core/__pycache__/validator.cpython-312.pyc\nsrc/agentgym/core/__pycach"
       },
       {
@@ -397,7 +397,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"TokenBucket|rate_limit\" src tests | head -n 20",
-        "elapsed_ms": 9.468,
+        "elapsed_ms": 9.479,
         "output_preview": "src/agentgym/envs/mvp_world.py:9:        \"search\": {\"latency\": 2.0, \"capacity\": 5, \"requirements\": [\"api_search\"], \"rate_limit_per_sec\": 2.0},\nsrc/agentgym/envs/mvp_world.py:10:        \"compute\": {\"latency\": 10.0, \"capacity\": 2, \"requirements\": [\"compute_slot\"], \"rate_limit_per_sec\": 1.0},\nsrc/agent"
       },
       {
@@ -408,7 +408,7 @@
           "end_line": 120
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,120p' \"src/agentgym/core/allocator.py\"",
-        "elapsed_ms": 7.685,
+        "elapsed_ms": 7.74,
         "output_preview": "from dataclasses import dataclass\nfrom typing import Dict, List, Tuple\n\n\n@dataclass\nclass ResourceUnit:\n    total_units: int\n    used_units: int = 0\n\n\n@dataclass\nclass TokenBucket:\n    rate_per_sec: float\n    capacity: float\n    tokens: float\n    last_refill_time: float = 0.0\n\n    def refill(self, n"
       },
       {
@@ -419,7 +419,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"replay_duplicate_decomposition|replay_invariant_precheck\" src tests | head -n 20",
-        "elapsed_ms": 9.365,
+        "elapsed_ms": 9.078,
         "output_preview": "src/agentgym/eval/runner.py:7:from agentgym.core.replay import replay_duplicate_decomposition, replay_invariant_precheck, replay_event_distribution\nsrc/agentgym/eval/runner.py:350:    replay_violations = replay_invariant_precheck(events)\nsrc/agentgym/eval/runner.py:351:    replay_dups = replay_dupli"
       },
       {
@@ -430,7 +430,7 @@
           "end_line": 140
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,140p' \"src/agentgym/core/replay.py\"",
-        "elapsed_ms": 8.042,
+        "elapsed_ms": 7.624,
         "output_preview": "import json\nfrom collections import defaultdict\nfrom pathlib import Path\nfrom typing import Dict, List, Tuple\n\n\nclass EventRecorder:\n    def __init__(self):\n        self.events: List[Dict] = []\n\n    def record(self, event_dict: Dict) -> None:\n        self.events.append(event_dict)\n\n    def dump_json"
       },
       {
@@ -440,7 +440,7 @@
           "max_entries": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && find \"src/agentgym/core\" -type f | sed 's#^./##' | sort | head -n 20",
-        "elapsed_ms": 11.13,
+        "elapsed_ms": 11.058,
         "output_preview": "src/agentgym/core/__pycache__/allocator.cpython-312.pyc\nsrc/agentgym/core/__pycache__/events.cpython-312.pyc\nsrc/agentgym/core/__pycache__/replay.cpython-312.pyc\nsrc/agentgym/core/__pycache__/simulator.cpython-312.pyc\nsrc/agentgym/core/__pycache__/validator.cpython-312.pyc\nsrc/agentgym/core/__pycach"
       },
       {
@@ -451,7 +451,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"TokenBucket|rate_limit\" src tests | head -n 20",
-        "elapsed_ms": 9.511,
+        "elapsed_ms": 9.502,
         "output_preview": "src/agentgym/envs/mvp_world.py:9:        \"search\": {\"latency\": 2.0, \"capacity\": 5, \"requirements\": [\"api_search\"], \"rate_limit_per_sec\": 2.0},\nsrc/agentgym/envs/mvp_world.py:10:        \"compute\": {\"latency\": 10.0, \"capacity\": 2, \"requirements\": [\"compute_slot\"], \"rate_limit_per_sec\": 1.0},\nsrc/agent"
       },
       {
@@ -462,7 +462,7 @@
           "end_line": 120
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,120p' \"src/agentgym/core/allocator.py\"",
-        "elapsed_ms": 7.95,
+        "elapsed_ms": 7.662,
         "output_preview": "from dataclasses import dataclass\nfrom typing import Dict, List, Tuple\n\n\n@dataclass\nclass ResourceUnit:\n    total_units: int\n    used_units: int = 0\n\n\n@dataclass\nclass TokenBucket:\n    rate_per_sec: float\n    capacity: float\n    tokens: float\n    last_refill_time: float = 0.0\n\n    def refill(self, n"
       },
       {
@@ -473,7 +473,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"replay_duplicate_decomposition|replay_invariant_precheck\" src tests | head -n 20",
-        "elapsed_ms": 9.506,
+        "elapsed_ms": 9.231,
         "output_preview": "src/agentgym/eval/runner.py:7:from agentgym.core.replay import replay_duplicate_decomposition, replay_invariant_precheck, replay_event_distribution\nsrc/agentgym/eval/runner.py:350:    replay_violations = replay_invariant_precheck(events)\nsrc/agentgym/eval/runner.py:351:    replay_dups = replay_dupli"
       },
       {
@@ -484,7 +484,7 @@
           "end_line": 140
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,140p' \"src/agentgym/core/replay.py\"",
-        "elapsed_ms": 7.844,
+        "elapsed_ms": 7.604,
         "output_preview": "import json\nfrom collections import defaultdict\nfrom pathlib import Path\nfrom typing import Dict, List, Tuple\n\n\nclass EventRecorder:\n    def __init__(self):\n        self.events: List[Dict] = []\n\n    def record(self, event_dict: Dict) -> None:\n        self.events.append(event_dict)\n\n    def dump_json"
       },
       {
@@ -494,7 +494,7 @@
           "max_entries": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && find \"src/agentgym/policies\" -type f | sed 's#^./##' | sort | head -n 20",
-        "elapsed_ms": 10.944,
+        "elapsed_ms": 10.815,
         "output_preview": "src/agentgym/policies/__pycache__/base.cpython-312.pyc\nsrc/agentgym/policies/__pycache__/independent.cpython-312.pyc\nsrc/agentgym/policies/__pycache__/planner_worker.cpython-312.pyc\nsrc/agentgym/policies/__pycache__/shared_memory.cpython-312.pyc\nsrc/agentgym/policies/base.py\nsrc/agentgym/policies/in"
       },
       {
@@ -505,7 +505,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"SharedMemoryPolicy|plan_semantic_duplicates\" src tests | head -n 20",
-        "elapsed_ms": 9.228,
+        "elapsed_ms": 9.289,
         "output_preview": "src/agentgym/eval/runner.py:12:from agentgym.policies.shared_memory import SharedMemoryPolicy\nsrc/agentgym/eval/runner.py:18:    \"shared_memory\": SharedMemoryPolicy,\nsrc/agentgym/eval/runner.py:327:        plans.extend(policy.plan_semantic_duplicates(num_tasks=cfg.num_tasks, num_agents=len(world.age"
       },
       {
@@ -516,7 +516,7 @@
           "end_line": 120
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,120p' \"src/agentgym/policies/shared_memory.py\"",
-        "elapsed_ms": 7.633,
+        "elapsed_ms": 7.706,
         "output_preview": "from .base import BasePolicy, ToolRequestPlan, MessagePlan\n\n\nclass SharedMemoryPolicy(BasePolicy):\n    name = \"shared_memory\"\n\n    def plan_requests(self, num_tasks: int, num_agents: int = 5):\n        # Shared memory policy prefers search+database and limits expensive compute.\n        plans = []\n   "
       },
       {
@@ -527,7 +527,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"semantic_duplicate_work_count|duplicate_tool_calls\" src tests | head -n 20",
-        "elapsed_ms": 9.057,
+        "elapsed_ms": 9.079,
         "output_preview": "src/agentgym/eval/runner.py:34:    \"semantic_duplicate_work_count\",\nsrc/agentgym/eval/runner.py:54:    \"duplicate_tool_calls\",\nsrc/agentgym/eval/runner.py:392:        \"semantic_duplicate_work_count\": int(world.metrics[\"semantic_duplicate_work_count\"]),\nsrc/agentgym/eval/runner.py:412:        \"duplic"
       },
       {
@@ -538,7 +538,7 @@
           "end_line": 420
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '320,420p' \"src/agentgym/eval/runner.py\"",
-        "elapsed_ms": 7.591,
+        "elapsed_ms": 7.704,
         "output_preview": "    for k, v in policy.world_overrides().items():\n        setattr(world, k, v)\n    stress_knobs = _policy_stress_knobs(cfg.policy_name, cfg.scenario)\n    _apply_scenario_world_overrides(world, cfg.scenario, stress_knobs)\n\n    plans = policy.plan_requests(num_tasks=cfg.num_tasks, num_agents=len(world"
       },
       {
@@ -548,7 +548,7 @@
           "max_entries": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && find \"src/agentgym/core\" -type f | sed 's#^./##' | sort | head -n 20",
-        "elapsed_ms": 10.769,
+        "elapsed_ms": 10.828,
         "output_preview": "src/agentgym/core/__pycache__/allocator.cpython-312.pyc\nsrc/agentgym/core/__pycache__/events.cpython-312.pyc\nsrc/agentgym/core/__pycache__/replay.cpython-312.pyc\nsrc/agentgym/core/__pycache__/simulator.cpython-312.pyc\nsrc/agentgym/core/__pycache__/validator.cpython-312.pyc\nsrc/agentgym/core/__pycach"
       },
       {
@@ -559,7 +559,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"semantic_duplicate_work_count|duplicate_tool_calls\" src tests | head -n 20",
-        "elapsed_ms": 9.328,
+        "elapsed_ms": 9.44,
         "output_preview": "src/agentgym/eval/runner.py:34:    \"semantic_duplicate_work_count\",\nsrc/agentgym/eval/runner.py:54:    \"duplicate_tool_calls\",\nsrc/agentgym/eval/runner.py:392:        \"semantic_duplicate_work_count\": int(world.metrics[\"semantic_duplicate_work_count\"]),\nsrc/agentgym/eval/runner.py:412:        \"duplic"
       },
       {
@@ -570,7 +570,7 @@
           "end_line": 420
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '320,420p' \"src/agentgym/eval/runner.py\"",
-        "elapsed_ms": 7.766,
+        "elapsed_ms": 7.829,
         "output_preview": "    for k, v in policy.world_overrides().items():\n        setattr(world, k, v)\n    stress_knobs = _policy_stress_knobs(cfg.policy_name, cfg.scenario)\n    _apply_scenario_world_overrides(world, cfg.scenario, stress_knobs)\n\n    plans = policy.plan_requests(num_tasks=cfg.num_tasks, num_agents=len(world"
       },
       {
@@ -581,7 +581,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"EventRecorder|replay_event_distribution\" src tests | head -n 20",
-        "elapsed_ms": 9.126,
+        "elapsed_ms": 9.375,
         "output_preview": "src/agentgym/eval/runner.py:7:from agentgym.core.replay import replay_duplicate_decomposition, replay_invariant_precheck, replay_event_distribution\nsrc/agentgym/eval/runner.py:352:    replay_dist = replay_event_distribution(events)\nsrc/agentgym/core/replay.py:7:class EventRecorder:\nsrc/agentgym/core"
       },
       {
@@ -592,7 +592,7 @@
           "end_line": 140
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,140p' \"src/agentgym/core/replay.py\"",
-        "elapsed_ms": 7.588,
+        "elapsed_ms": 7.769,
         "output_preview": "import json\nfrom collections import defaultdict\nfrom pathlib import Path\nfrom typing import Dict, List, Tuple\n\n\nclass EventRecorder:\n    def __init__(self):\n        self.events: List[Dict] = []\n\n    def record(self, event_dict: Dict) -> None:\n        self.events.append(event_dict)\n\n    def dump_json"
       }
     ],
@@ -708,18 +708,18 @@
       "calls_saved": 9,
       "dedup_rate": 0.45,
       "cache_hit_rate": 0.45,
-      "avg_observed_latency_ms": 4.994,
-      "avg_underlying_latency_ms": 9.073,
+      "avg_observed_latency_ms": 5.008,
+      "avg_underlying_latency_ms": 9.098,
       "rate_limit_interventions": 0,
       "shared_memory_writes": 0,
       "shared_memory_hits": 0,
       "task_conflicts_prevented": 0,
-      "wall_clock_ms": 101.112
+      "wall_clock_ms": 101.359
     },
-    "report": "AgentGlue Report:\n  Observed tool calls:      20\n  Underlying executions:    11\n  Calls saved by dedup:     9/20 (45%)\n  Cache hit rate:           45%\n  Avg observed latency:     4.99 ms\n  Avg underlying latency:   9.07 ms\n  Rate limit interventions: 0\n  Shared memory writes:     0\n  Shared memory hits:       0\n  Task conflicts prevented: 0",
+    "report": "AgentGlue Report:\n  Observed tool calls:      20\n  Underlying executions:    11\n  Calls saved by dedup:     9/20 (45%)\n  Cache hit rate:           45%\n  Avg observed latency:     5.01 ms\n  Avg underlying latency:   9.10 ms\n  Rate limit interventions: 0\n  Shared memory writes:     0\n  Shared memory hits:       0\n  Task conflicts prevented: 0",
     "events": [
       {
-        "timestamp": 1301924.344282339,
+        "timestamp": 1302730.085887531,
         "event_type": "tool_call",
         "agent_id": "agent-a",
         "tool_name": "list_files",
@@ -729,18 +729,18 @@
         }
       },
       {
-        "timestamp": 1301924.355119311,
+        "timestamp": 1302730.097120475,
         "event_type": "tool_call_completed",
         "agent_id": "agent-a",
         "tool_name": "list_files",
         "correlation_id": "",
         "payload": {
           "args_hash": "e61d33bfbac366b3f7086e07e6c622041cdd9b81632345cf9d8ff7b84f61a7ec",
-          "latency_ms": 11.722722
+          "latency_ms": 12.126825
         }
       },
       {
-        "timestamp": 1301924.355162483,
+        "timestamp": 1302730.097163919,
         "event_type": "tool_call",
         "agent_id": "agent-a",
         "tool_name": "search_code",
@@ -750,18 +750,18 @@
         }
       },
       {
-        "timestamp": 1301924.364454062,
+        "timestamp": 1302730.1065846,
         "event_type": "tool_call_completed",
         "agent_id": "agent-a",
         "tool_name": "search_code",
         "correlation_id": "",
         "payload": {
           "args_hash": "939949e715f70cea92e6b6eccf5586cad874ae1be759492e15acb64b7130efc0",
-          "latency_ms": 9.236488
+          "latency_ms": 9.363757
         }
       },
       {
-        "timestamp": 1301924.364490668,
+        "timestamp": 1302730.106621397,
         "event_type": "tool_call",
         "agent_id": "agent-a",
         "tool_name": "read_file",
@@ -771,18 +771,18 @@
         }
       },
       {
-        "timestamp": 1301924.372289691,
+        "timestamp": 1302730.11431171,
         "event_type": "tool_call_completed",
         "agent_id": "agent-a",
         "tool_name": "read_file",
         "correlation_id": "",
         "payload": {
           "args_hash": "053bd39f9864b7f027ef5c2ef8f196349e14e1ba9145aaf584d77482726b502d",
-          "latency_ms": 7.745107
+          "latency_ms": 7.63748
         }
       },
       {
-        "timestamp": 1301924.372325645,
+        "timestamp": 1302730.114346532,
         "event_type": "tool_call",
         "agent_id": "agent-a",
         "tool_name": "search_code",
@@ -792,18 +792,18 @@
         }
       },
       {
-        "timestamp": 1301924.381774717,
+        "timestamp": 1302730.12360409,
         "event_type": "tool_call_completed",
         "agent_id": "agent-a",
         "tool_name": "search_code",
         "correlation_id": "",
         "payload": {
           "args_hash": "6a2af9560d10a5babde83f43113197b7fda193bf557b3277b7b8cb7302ce4131",
-          "latency_ms": 9.391365
+          "latency_ms": 9.197695
         }
       },
       {
-        "timestamp": 1301924.381811145,
+        "timestamp": 1302730.123639563,
         "event_type": "tool_call",
         "agent_id": "agent-a",
         "tool_name": "read_file",
@@ -813,18 +813,18 @@
         }
       },
       {
-        "timestamp": 1301924.389744896,
+        "timestamp": 1302730.131556337,
         "event_type": "tool_call_completed",
         "agent_id": "agent-a",
         "tool_name": "read_file",
         "correlation_id": "",
         "payload": {
           "args_hash": "8a610997207c519ead3fdc30ef43fd356ac7087b3f03fa67c66d21b3484e63ae",
-          "latency_ms": 7.878901
+          "latency_ms": 7.864067
         }
       },
       {
-        "timestamp": 1301924.389790469,
+        "timestamp": 1302730.131602046,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-b",
         "tool_name": "list_files",
@@ -832,11 +832,11 @@
         "payload": {
           "args_hash": "e61d33bfbac366b3f7086e07e6c622041cdd9b81632345cf9d8ff7b84f61a7ec",
           "original_agent": "agent-a",
-          "cache_age_s": 0.034683
+          "cache_age_s": 0.034494
         }
       },
       {
-        "timestamp": 1301924.38981965,
+        "timestamp": 1302730.131632196,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-b",
         "tool_name": "search_code",
@@ -844,11 +844,11 @@
         "payload": {
           "args_hash": "939949e715f70cea92e6b6eccf5586cad874ae1be759492e15acb64b7130efc0",
           "original_agent": "agent-a",
-          "cache_age_s": 0.025378
+          "cache_age_s": 0.02506
         }
       },
       {
-        "timestamp": 1301924.389845045,
+        "timestamp": 1302730.131656814,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-b",
         "tool_name": "read_file",
@@ -856,11 +856,11 @@
         "payload": {
           "args_hash": "053bd39f9864b7f027ef5c2ef8f196349e14e1ba9145aaf584d77482726b502d",
           "original_agent": "agent-a",
-          "cache_age_s": 0.017567
+          "cache_age_s": 0.017357
         }
       },
       {
-        "timestamp": 1301924.38986821,
+        "timestamp": 1302730.131679248,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-b",
         "tool_name": "search_code",
@@ -868,11 +868,11 @@
         "payload": {
           "args_hash": "6a2af9560d10a5babde83f43113197b7fda193bf557b3277b7b8cb7302ce4131",
           "original_agent": "agent-a",
-          "cache_age_s": 0.008106
+          "cache_age_s": 0.008088
         }
       },
       {
-        "timestamp": 1301924.389889243,
+        "timestamp": 1302730.131700202,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-b",
         "tool_name": "read_file",
@@ -884,7 +884,7 @@
         }
       },
       {
-        "timestamp": 1301924.389907818,
+        "timestamp": 1302730.13171822,
         "event_type": "tool_call",
         "agent_id": "agent-c",
         "tool_name": "list_files",
@@ -894,18 +894,18 @@
         }
       },
       {
-        "timestamp": 1301924.400800502,
+        "timestamp": 1302730.142669113,
         "event_type": "tool_call_completed",
         "agent_id": "agent-c",
         "tool_name": "list_files",
         "correlation_id": "",
         "payload": {
           "args_hash": "f8ccf234bd68f7b112cc37086b478b9e34bf683677fef2b5ed5ea1702ce60768",
-          "latency_ms": 10.83472
+          "latency_ms": 10.895526
         }
       },
       {
-        "timestamp": 1301924.400837846,
+        "timestamp": 1302730.142705871,
         "event_type": "tool_call",
         "agent_id": "agent-c",
         "tool_name": "search_code",
@@ -915,18 +915,18 @@
         }
       },
       {
-        "timestamp": 1301924.410128295,
+        "timestamp": 1302730.151889823,
         "event_type": "tool_call_completed",
         "agent_id": "agent-c",
         "tool_name": "search_code",
         "correlation_id": "",
         "payload": {
           "args_hash": "d9d82856ccba1504316eba2d0c1b5ab9bb591d76837a0387ea32c326daa23581",
-          "latency_ms": 9.236333
+          "latency_ms": 9.131735
         }
       },
       {
-        "timestamp": 1301924.410164021,
+        "timestamp": 1302730.151924682,
         "event_type": "tool_call",
         "agent_id": "agent-c",
         "tool_name": "read_file",
@@ -936,18 +936,18 @@
         }
       },
       {
-        "timestamp": 1301924.417842062,
+        "timestamp": 1302730.159539098,
         "event_type": "tool_call_completed",
         "agent_id": "agent-c",
         "tool_name": "read_file",
         "correlation_id": "",
         "payload": {
           "args_hash": "7b91cab6a2a25908a75cccc8c03c538c5226564645343fce134e3c4904e0c071",
-          "latency_ms": 7.62704
+          "latency_ms": 7.562009
         }
       },
       {
-        "timestamp": 1301924.417877259,
+        "timestamp": 1302730.15957522,
         "event_type": "tool_call",
         "agent_id": "agent-c",
         "tool_name": "search_code",
@@ -957,18 +957,18 @@
         }
       },
       {
-        "timestamp": 1301924.427046285,
+        "timestamp": 1302730.168627876,
         "event_type": "tool_call_completed",
         "agent_id": "agent-c",
         "tool_name": "search_code",
         "correlation_id": "",
         "payload": {
           "args_hash": "92046f3b4dd536eaae40dcb058aa49649550379a0a078171ac5b36fb4ab1038a",
-          "latency_ms": 9.086399
+          "latency_ms": 8.997955
         }
       },
       {
-        "timestamp": 1301924.427092799,
+        "timestamp": 1302730.168667363,
         "event_type": "tool_call",
         "agent_id": "agent-c",
         "tool_name": "read_file",
@@ -978,18 +978,18 @@
         }
       },
       {
-        "timestamp": 1301924.434621234,
+        "timestamp": 1302730.176348127,
         "event_type": "tool_call_completed",
         "agent_id": "agent-c",
         "tool_name": "read_file",
         "correlation_id": "",
         "payload": {
           "args_hash": "4b7ae928b383c5935be8a072a74ac5b8088bfd7259d1bc96bc7e3870b5025789",
-          "latency_ms": 7.479127
+          "latency_ms": 7.627973
         }
       },
       {
-        "timestamp": 1301924.434662434,
+        "timestamp": 1302730.176389141,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-d",
         "tool_name": "list_files",
@@ -997,11 +997,11 @@
         "payload": {
           "args_hash": "e61d33bfbac366b3f7086e07e6c622041cdd9b81632345cf9d8ff7b84f61a7ec",
           "original_agent": "agent-a",
-          "cache_age_s": 0.079556
+          "cache_age_s": 0.079282
         }
       },
       {
-        "timestamp": 1301924.434688884,
+        "timestamp": 1302730.17641684,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-d",
         "tool_name": "search_code",
@@ -1009,11 +1009,11 @@
         "payload": {
           "args_hash": "92046f3b4dd536eaae40dcb058aa49649550379a0a078171ac5b36fb4ab1038a",
           "original_agent": "agent-c",
-          "cache_age_s": 0.007658
+          "cache_age_s": 0.007799
         }
       },
       {
-        "timestamp": 1301924.434712704,
+        "timestamp": 1302730.17644089,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-d",
         "tool_name": "read_file",
@@ -1025,7 +1025,7 @@
         }
       },
       {
-        "timestamp": 1301924.434745146,
+        "timestamp": 1302730.176467112,
         "event_type": "tool_call",
         "agent_id": "agent-d",
         "tool_name": "search_code",
@@ -1035,18 +1035,18 @@
         }
       },
       {
-        "timestamp": 1301924.444347975,
+        "timestamp": 1302730.186187695,
         "event_type": "tool_call_completed",
         "agent_id": "agent-d",
         "tool_name": "search_code",
         "correlation_id": "",
         "payload": {
           "args_hash": "a4f269501153a878134ba86d4e6fcf1ae0054870fd3e3f39fc828ac295304acd",
-          "latency_ms": 9.559987
+          "latency_ms": 9.671608
         }
       },
       {
-        "timestamp": 1301924.444387402,
+        "timestamp": 1302730.186228818,
         "event_type": "tool_call_deduped",
         "agent_id": "agent-d",
         "tool_name": "read_file",
@@ -1054,7 +1054,7 @@
         "payload": {
           "args_hash": "8a610997207c519ead3fdc30ef43fd356ac7087b3f03fa67c66d21b3484e63ae",
           "original_agent": "agent-a",
-          "cache_age_s": 0.054654
+          "cache_age_s": 0.054684
         }
       }
     ],
@@ -1266,7 +1266,7 @@
           "max_entries": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && find \"src/agentgym/core\" -type f | sed 's#^./##' | sort | head -n 20",
-        "elapsed_ms": 10.742,
+        "elapsed_ms": 11.134,
         "output_preview": "src/agentgym/core/__pycache__/allocator.cpython-312.pyc\nsrc/agentgym/core/__pycache__/events.cpython-312.pyc\nsrc/agentgym/core/__pycache__/replay.cpython-312.pyc\nsrc/agentgym/core/__pycache__/simulator.cpython-312.pyc\nsrc/agentgym/core/__pycache__/validator.cpython-312.pyc\nsrc/agentgym/core/__pycach"
       },
       {
@@ -1277,7 +1277,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"TokenBucket|rate_limit\" src tests | head -n 20",
-        "elapsed_ms": 9.206,
+        "elapsed_ms": 9.334,
         "output_preview": "src/agentgym/envs/mvp_world.py:9:        \"search\": {\"latency\": 2.0, \"capacity\": 5, \"requirements\": [\"api_search\"], \"rate_limit_per_sec\": 2.0},\nsrc/agentgym/envs/mvp_world.py:10:        \"compute\": {\"latency\": 10.0, \"capacity\": 2, \"requirements\": [\"compute_slot\"], \"rate_limit_per_sec\": 1.0},\nsrc/agent"
       },
       {
@@ -1288,7 +1288,7 @@
           "end_line": 120
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,120p' \"src/agentgym/core/allocator.py\"",
-        "elapsed_ms": 7.717,
+        "elapsed_ms": 7.61,
         "output_preview": "from dataclasses import dataclass\nfrom typing import Dict, List, Tuple\n\n\n@dataclass\nclass ResourceUnit:\n    total_units: int\n    used_units: int = 0\n\n\n@dataclass\nclass TokenBucket:\n    rate_per_sec: float\n    capacity: float\n    tokens: float\n    last_refill_time: float = 0.0\n\n    def refill(self, n"
       },
       {
@@ -1299,7 +1299,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"replay_duplicate_decomposition|replay_invariant_precheck\" src tests | head -n 20",
-        "elapsed_ms": 9.365,
+        "elapsed_ms": 9.172,
         "output_preview": "src/agentgym/eval/runner.py:7:from agentgym.core.replay import replay_duplicate_decomposition, replay_invariant_precheck, replay_event_distribution\nsrc/agentgym/eval/runner.py:350:    replay_violations = replay_invariant_precheck(events)\nsrc/agentgym/eval/runner.py:351:    replay_dups = replay_dupli"
       },
       {
@@ -1310,7 +1310,7 @@
           "end_line": 140
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,140p' \"src/agentgym/core/replay.py\"",
-        "elapsed_ms": 7.851,
+        "elapsed_ms": 7.837,
         "output_preview": "import json\nfrom collections import defaultdict\nfrom pathlib import Path\nfrom typing import Dict, List, Tuple\n\n\nclass EventRecorder:\n    def __init__(self):\n        self.events: List[Dict] = []\n\n    def record(self, event_dict: Dict) -> None:\n        self.events.append(event_dict)\n\n    def dump_json"
       },
       {
@@ -1320,7 +1320,7 @@
           "max_entries": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && find \"src/agentgym/policies\" -type f | sed 's#^./##' | sort | head -n 20",
-        "elapsed_ms": 10.812,
+        "elapsed_ms": 10.874,
         "output_preview": "src/agentgym/policies/__pycache__/base.cpython-312.pyc\nsrc/agentgym/policies/__pycache__/independent.cpython-312.pyc\nsrc/agentgym/policies/__pycache__/planner_worker.cpython-312.pyc\nsrc/agentgym/policies/__pycache__/shared_memory.cpython-312.pyc\nsrc/agentgym/policies/base.py\nsrc/agentgym/policies/in"
       },
       {
@@ -1331,7 +1331,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"SharedMemoryPolicy|plan_semantic_duplicates\" src tests | head -n 20",
-        "elapsed_ms": 9.208,
+        "elapsed_ms": 9.106,
         "output_preview": "src/agentgym/eval/runner.py:12:from agentgym.policies.shared_memory import SharedMemoryPolicy\nsrc/agentgym/eval/runner.py:18:    \"shared_memory\": SharedMemoryPolicy,\nsrc/agentgym/eval/runner.py:327:        plans.extend(policy.plan_semantic_duplicates(num_tasks=cfg.num_tasks, num_agents=len(world.age"
       },
       {
@@ -1342,7 +1342,7 @@
           "end_line": 120
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '1,120p' \"src/agentgym/policies/shared_memory.py\"",
-        "elapsed_ms": 7.597,
+        "elapsed_ms": 7.532,
         "output_preview": "from .base import BasePolicy, ToolRequestPlan, MessagePlan\n\n\nclass SharedMemoryPolicy(BasePolicy):\n    name = \"shared_memory\"\n\n    def plan_requests(self, num_tasks: int, num_agents: int = 5):\n        # Shared memory policy prefers search+database and limits expensive compute.\n        plans = []\n   "
       },
       {
@@ -1353,7 +1353,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"semantic_duplicate_work_count|duplicate_tool_calls\" src tests | head -n 20",
-        "elapsed_ms": 9.049,
+        "elapsed_ms": 8.966,
         "output_preview": "src/agentgym/eval/runner.py:34:    \"semantic_duplicate_work_count\",\nsrc/agentgym/eval/runner.py:54:    \"duplicate_tool_calls\",\nsrc/agentgym/eval/runner.py:392:        \"semantic_duplicate_work_count\": int(world.metrics[\"semantic_duplicate_work_count\"]),\nsrc/agentgym/eval/runner.py:412:        \"duplic"
       },
       {
@@ -1364,7 +1364,7 @@
           "end_line": 420
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && sed -n '320,420p' \"src/agentgym/eval/runner.py\"",
-        "elapsed_ms": 7.452,
+        "elapsed_ms": 7.601,
         "output_preview": "    for k, v in policy.world_overrides().items():\n        setattr(world, k, v)\n    stress_knobs = _policy_stress_knobs(cfg.policy_name, cfg.scenario)\n    _apply_scenario_world_overrides(world, cfg.scenario, stress_knobs)\n\n    plans = policy.plan_requests(num_tasks=cfg.num_tasks, num_agents=len(world"
       },
       {
@@ -1375,7 +1375,7 @@
           "max_hits": 20
         },
         "command": "cd /home/ubuntu/.openclaw/workspace/projects/AgentGym && grep -RIn --binary-files=without-match -E \"EventRecorder|replay_event_distribution\" src tests | head -n 20",
-        "elapsed_ms": 9.526,
+        "elapsed_ms": 9.644,
         "output_preview": "src/agentgym/eval/runner.py:7:from agentgym.core.replay import replay_duplicate_decomposition, replay_invariant_precheck, replay_event_distribution\nsrc/agentgym/eval/runner.py:352:    replay_dist = replay_event_distribution(events)\nsrc/agentgym/core/replay.py:7:class EventRecorder:\nsrc/agentgym/core"
       }
     ],

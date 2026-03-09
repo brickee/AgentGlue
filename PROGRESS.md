@@ -41,14 +41,27 @@
 - Cache hit rate: **45%**
 - Wall-clock on this scripted run dropped from **191.7 ms** to **101.1 ms**
 
+## 2026-03-09 — dedup observability cleanup + benchmark harness
+- Fixed `agentglue.core.recorder.detect_duplicates()` so it understands runtime `tool_call_deduped` events instead of only raw `tool_call` events.
+- Added richer duplicate summaries with per-agent, per-tool, and per-intent breakdowns suitable for benchmark artifacts.
+- Extended smoke coverage to verify:
+  - recorder analysis matches runtime dedup events
+  - concurrent identical calls do **not** currently single-flight / coalesce in flight
+- Added `scripts/benchmark_repo_exploration.py`, a lightweight reusable harness with:
+  - multiple runs
+  - stable JSON output
+  - metadata block
+  - per-tool summaries
+  - JSONL event exports
+  - a dedicated concurrent probe
+- Ran the harness and saved artifacts under `artifacts/benchmarks/2026-03-09_dedup_observability/`.
+
 ### What changed in my understanding
-- Exact-match dedup is already meaningfully useful on repo exploration; this is enough signal to justify building the lightweight benchmark harness next.
-- The main immediate follow-up is not “does this work at all?” anymore.
-- The main immediate follow-up is:
-  1. fix duplicate-trace analysis for runtime dedup events (`tool_call_deduped`)
-  2. repeat the benchmark cleanly across runs / repos
+- Exact-match dedup remains meaningfully useful on repo exploration; the repeated result is stable enough to inspect rather than hand-wave.
+- The observability bug was small but real: the old duplicate helper undercounted exactly the thing the runtime was saving.
+- Concurrency evidence is now explicit: current dedup is **cache-after-first-call**, not in-flight coalescing.
 
 ### Current status
-- The first usable v0.1 path is present and now has one credible real workload result, not just a plan.
-- Main working story: wrap repo-exploration tools, save repeated calls, inspect metrics, and inspect JSONL traces.
-- Benchmark harness is still lightweight / ad hoc, but the benchmark direction now has concrete evidence behind it.
+- The benchmark path is now lightweight but reusable rather than one-off.
+- Main working story: wrap repo-exploration tools, save repeated calls, inspect metrics, and inspect JSONL traces with the recorder analysis aligned to the runtime schema.
+- Best next move if AgentGlue wants a stronger multi-agent claim: add straightforward single-flight / in-flight coalescing for identical calls.
