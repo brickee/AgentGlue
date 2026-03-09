@@ -6,7 +6,7 @@ import time
 from agentglue import AgentGlue
 from agentglue.core.allocator import RateLimiter
 from agentglue.core.metrics import GlueMetrics
-from agentglue.core.recorder import detect_duplicates
+from agentglue.core.recorder import detect_duplicates, summarize_jsonl
 from agentglue.middleware.dedup import ToolDedup
 from agentglue.middleware.shared_memory import SharedMemory
 from agentglue.middleware.task_lock import TaskLock
@@ -314,6 +314,29 @@ def test_single_flight_error_propagates_to_waiters():
     assert len(errors) == 2
     assert errors["agent-a"] == "boom"
     assert errors["agent-b"] == "boom"
+
+
+def test_export_events_jsonl_roundtrip(tmp_path):
+    glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False)
+
+    @glue.tool(ttl=60.0)
+    def lookup(x):
+        return x.upper()
+
+    lookup("alpha", agent_id="agent-a")
+    lookup("alpha", agent_id="agent-b")
+    lookup("beta", agent_id="agent-c")
+
+    export_path = tmp_path / "events.jsonl"
+    exported = glue.export_events_jsonl(str(export_path))
+    reloaded = summarize_jsonl(str(export_path))
+
+    assert exported["path"] == str(export_path)
+    assert exported["event_count"] == len(glue.recorder.events)
+    assert exported["duplicate_analysis"]["total_duplicates"] == 1
+    assert exported["metrics"]["tool_calls_deduped"] == 1
+    assert reloaded["event_count"] == exported["event_count"]
+    assert reloaded["duplicate_analysis"] == exported["duplicate_analysis"]
 
 
 if __name__ == "__main__":

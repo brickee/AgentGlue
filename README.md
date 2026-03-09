@@ -113,6 +113,23 @@ print(summary["calls_saved"])
 print(summary["cache_hit_rate"])
 ```
 
+### Export runtime events to JSONL
+
+```python
+exported = glue.export_events_jsonl("artifacts/examples/my_run.events.jsonl")
+print(exported["event_count"])
+print(exported["duplicate_analysis"]["by_tool"])
+```
+
+If you want to re-open an exported log later without a live `AgentGlue` instance:
+
+```python
+from agentglue.core.recorder import summarize_jsonl
+
+summary = summarize_jsonl("artifacts/examples/my_run.events.jsonl")
+print(summary["duplicate_analysis"]["total_duplicates"])
+```
+
 ## What v0.1 measures
 
 - observed tool calls
@@ -193,6 +210,12 @@ Run the tiny example:
 PYTHONPATH=src python3 examples/basic_report.py
 ```
 
+Run the JSONL export example:
+
+```bash
+PYTHONPATH=src python3 examples/recorder_export.py
+```
+
 Run the smoke tests with:
 
 ```bash
@@ -209,6 +232,12 @@ Export benchmark artifacts:
 
 ```bash
 PYTHONPATH=src python3 scripts/benchmark_repo_exploration.py --runs 3 --label local_run
+```
+
+Sanity-check a benchmark artifact after generation:
+
+```bash
+PYTHONPATH=src python3 scripts/check_benchmark_result.py artifacts/benchmarks/local_run/result.json
 ```
 
 ## Disclaimer

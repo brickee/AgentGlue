@@ -4,6 +4,7 @@ import functools
 import hashlib
 import json
 import time
+from pathlib import Path
 from typing import Any, Callable, Dict
 
 from agentglue.core.allocator import RateLimiter
@@ -216,6 +217,17 @@ class AgentGlue:
 
     def summary(self) -> Dict:
         return self.metrics.summary()
+
+    def export_events_jsonl(self, path: str) -> Dict[str, Any]:
+        """Export the current recorder stream to JSONL and return a compact summary."""
+        if not self.recorder:
+            raise RuntimeError("AgentGlue recorder is disabled; initialize with record_events=True")
+        exported = self.recorder.export_summary(path)
+        return {
+            **exported,
+            "path": str(Path(exported["path"])),
+            "metrics": self.summary(),
+        }
 
     def _record_event(self, event_type: str, agent_id: str, tool_name: str, payload: Dict | None = None) -> None:
         if self.recorder:

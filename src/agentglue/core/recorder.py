@@ -19,12 +19,27 @@ class EventRecorder:
     def record(self, event_dict: Dict) -> None:
         self.events.append(event_dict)
 
-    def dump_jsonl(self, path: str) -> None:
+    def dump_jsonl(self, path: str) -> Path:
         p = Path(path)
         p.parent.mkdir(parents=True, exist_ok=True)
         with p.open("w", encoding="utf-8") as f:
             for e in self.events:
                 f.write(json.dumps(e, ensure_ascii=False) + "\n")
+        return p
+
+    def export_summary(self, path: str) -> Dict[str, Any]:
+        """Write the current event stream to JSONL and return a small summary.
+
+        Intended as a tiny usability helper for benchmark/debug workflows so a
+        caller can export one file and immediately inspect duplicate analysis
+        without re-plumbing the recorder internals.
+        """
+        exported_path = self.dump_jsonl(path)
+        return {
+            "path": str(exported_path),
+            "event_count": len(self.events),
+            "duplicate_analysis": detect_duplicates(self.events),
+        }
 
     def clear(self) -> None:
         self.events.clear()
@@ -37,6 +52,16 @@ def load_jsonl(path: str) -> List[Dict]:
         for line in f:
             out.append(json.loads(line))
     return out
+
+
+def summarize_jsonl(path: str) -> Dict[str, Any]:
+    """Load a JSONL event log and return a compact duplicate-oriented summary."""
+    events = load_jsonl(path)
+    return {
+        "path": str(Path(path)),
+        "event_count": len(events),
+        "duplicate_analysis": detect_duplicates(events),
+    }
 
 
 def _event_args_hash(event: Dict[str, Any]) -> str:

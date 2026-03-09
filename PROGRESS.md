@@ -91,3 +91,22 @@
 - The benchmark story is stronger because it no longer relies only on the cleanest possible overlap case.
 - The messaging is tighter because it now says exactly when AgentGlue helps and when it doesn’t.
 - The example lowers the cost of inspection for anyone evaluating whether the current v0.1 story is real.
+
+## 2026-03-09 — recorder export helper + benchmark sanity guard
+- Added a tiny first-class runtime export helper: `AgentGlue.export_events_jsonl(path)`.
+- Extended the recorder with small usability helpers:
+  - `EventRecorder.export_summary(path)`
+  - `summarize_jsonl(path)` for reloading exported event logs later
+- Added `examples/recorder_export.py` so the JSONL story is documented by executable example instead of buried in internals.
+- Added `scripts/check_benchmark_result.py`, a deliberately lightweight artifact sanity check that validates:
+  - per-run metric consistency
+  - per-tool summary totals
+  - duplicate-analysis alignment with runtime dedup metrics
+  - concurrent probe invariants
+- Added smoke coverage for JSONL export + reload roundtrip.
+- Updated `README.md` and `NEXT_TODO.md` to reflect the new helper/example and the more honest next step on benchmark checks.
+
+### Why this matters
+- JSONL export is now a real inspectable workflow rather than a hidden method on the recorder.
+- Benchmark artifacts are a little harder to accidentally misread or quietly regress.
+- This keeps the wedge narrow: better observability ergonomics and benchmark credibility, not new product sprawl.

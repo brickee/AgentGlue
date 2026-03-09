@@ -7,10 +7,10 @@
 4. ~~Record repeated baseline vs AgentGlue v0.1 metrics on at least one medium-sized Python repo.~~
 
 ## Next
-5. Expose JSONL export from the recorder in a documented example or tiny helper.
+5. ~~Expose JSONL export from the recorder in a documented example or tiny helper.~~
 6. ~~Add one second scenario with partial-overlap queries to measure what exact-match dedup misses.~~
 7. Add semantic dedup only if exact-match dedup leaves obvious savings on the table.
 8. Tighten shared-memory metrics on the runtime path.
 9. Add a minimal integration adapter skeleton (likely CrewAI or LangGraph).
 10. Improve rate-limit ergonomics if the benchmark shows real pressure there.
-11. Add benchmark regression checks to CI once the harness stabilizes.
+11. Decide whether the lightweight benchmark sanity check should stay local-only or become a small CI guard once artifact stability feels boring.
