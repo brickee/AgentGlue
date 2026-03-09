@@ -1,7 +1,7 @@
 # Next TODO
 
 ## Immediate
-1. Decide whether to add single-flight / in-flight coalescing for identical tool calls; the new concurrent probe shows current behavior is cache-after-first-call only.
+1. ~~Single-flight / in-flight coalescing~~ — **Done.** Concurrent identical calls now share the leader's result via `_InFlight` + `threading.Event`. Metrics track `tool_calls_coalesced`; events include `tool_call_coalesced`.
 2. Add one tiny example script under `examples/` that prints a real v0.1 report.
 3. Decide whether shared-memory auto-publish should remain enabled by default or become opt-in for a cleaner v0.1 story.
 4. Record repeated baseline vs AgentGlue v0.1 metrics on at least one medium-sized Python repo.

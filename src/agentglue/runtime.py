@@ -78,6 +78,7 @@ class AgentGlue:
                 args_hash = self._hash_call(tool_name, args, kwargs)
                 started = time.monotonic()
 
+                # 1. Cache hit — return immediately
                 if self.dedup_enabled and self.dedup:
                     entry = self.dedup.lookup(tool_name, args, kwargs)
                     if entry is not None:
@@ -99,6 +100,37 @@ class AgentGlue:
                         )
                         return entry.result
 
+                    # 2. Single-flight: join an in-flight execution if one exists
+                    cache_key = self.dedup._make_key(tool_name, args, kwargs)
+                    flight = self.dedup.try_join_flight(cache_key)
+                    if flight is not None:
+                        self._record_event(
+                            "tool_call_coalesced",
+                            agent_id,
+                            tool_name,
+                            {"args_hash": args_hash, "action": "waiting"},
+                        )
+                        flight.event.wait()
+                        if flight.error is not None:
+                            raise flight.error
+                        observed_ms = (time.monotonic() - started) * 1000.0
+                        self.metrics.record_tool_call(
+                            deduped=True,
+                            cache_hit=True,
+                            latency_ms=observed_ms,
+                        )
+                        self.metrics.record_coalesced()
+                        self._record_event(
+                            "tool_call_coalesced",
+                            agent_id,
+                            tool_name,
+                            {"args_hash": args_hash, "action": "resolved", "latency_ms": round(observed_ms, 6)},
+                        )
+                        return flight.result
+
+                    # 3. No cache, no in-flight — we are the leader; register flight
+                    self.dedup.begin_flight(cache_key)
+
                 if self.rate_limiter_enabled and self.rate_limiter:
                     allowed, reason = self.rate_limiter.try_acquire(tool_name)
                     if not allowed:
@@ -109,10 +141,20 @@ class AgentGlue:
                             tool_name,
                             {"args_hash": args_hash, "reason": reason},
                         )
+                        # End flight so waiters get the error
+                        if self.dedup_enabled and self.dedup:
+                            err = RuntimeError(f"AgentGlue: rate limited ({reason})")
+                            self.dedup.end_flight(cache_key, error=err)
                         raise RuntimeError(f"AgentGlue: rate limited ({reason})")
 
                 self._record_event("tool_call", agent_id, tool_name, {"args_hash": args_hash})
-                result = func(*args, **kwargs)
+                try:
+                    result = func(*args, **kwargs)
+                except BaseException as exc:
+                    if self.dedup_enabled and self.dedup:
+                        self.dedup.end_flight(cache_key, error=exc)
+                    raise
+
                 observed_ms = (time.monotonic() - started) * 1000.0
                 self.metrics.record_tool_call(
                     deduped=False,
@@ -123,18 +165,34 @@ class AgentGlue:
 
                 if self.dedup_enabled and self.dedup:
                     self.dedup.store(tool_name, args, kwargs, result, agent_id=agent_id, ttl=ttl)
+                    coalesced = self.dedup.end_flight(cache_key, result=result)
+                    if coalesced:
+                        self._record_event(
+                            "tool_call_completed",
+                            agent_id,
+                            tool_name,
+                            {"args_hash": args_hash, "latency_ms": round(observed_ms, 6), "coalesced_waiters": coalesced},
+                        )
+                    else:
+                        self._record_event(
+                            "tool_call_completed",
+                            agent_id,
+                            tool_name,
+                            {"args_hash": args_hash, "latency_ms": round(observed_ms, 6)},
+                        )
+                else:
+                    self._record_event(
+                        "tool_call_completed",
+                        agent_id,
+                        tool_name,
+                        {"args_hash": args_hash, "latency_ms": round(observed_ms, 6)},
+                    )
 
                 if self.memory_enabled and self.memory:
                     mem_key = f"{tool_name}:{args_hash}"
                     self.memory.write(mem_key, result, agent_id=agent_id)
                     self.metrics.record_memory_write()
 
-                self._record_event(
-                    "tool_call_completed",
-                    agent_id,
-                    tool_name,
-                    {"args_hash": args_hash, "latency_ms": round(observed_ms, 6)},
-                )
                 return result
 
             wrapper.__wrapped__ = func

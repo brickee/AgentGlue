@@ -1,14 +1,16 @@
 """Tool call deduplication middleware.
 
 Intercepts tool calls and returns cached results when the same tool
-has been called with the same arguments.
+has been called with the same arguments.  Supports in-flight coalescing
+(single-flight): if an identical call is already executing, later callers
+wait for the first result instead of executing again.
 """
 
 import hashlib
 import json
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Optional
 
 
@@ -30,21 +32,67 @@ class CacheEntry:
         return time.monotonic() - self.created_at
 
 
+@dataclass
+class _InFlight:
+    """Tracks a single in-progress tool execution for coalescing."""
+    event: threading.Event = field(default_factory=threading.Event)
+    result: Any = None
+    error: BaseException | None = None
+    waiters: int = 0
+
+
 class ToolDedup:
     """Deduplicates tool calls across multiple agents.
 
-    v0.1 intentionally stays narrow: exact-match dedup via a stable hash of
-    tool name + serialized args/kwargs with TTL-based caching.
+    Exact-match dedup via a stable hash of tool name + serialized args/kwargs
+    with TTL-based caching.  Also supports single-flight coalescing: concurrent
+    identical calls share the result of the first execution.
     """
 
     def __init__(self, default_ttl: float = 300.0):
         self.default_ttl = default_ttl
         self._cache: Dict[str, CacheEntry] = {}
         self._lock = threading.Lock()
+        self._flights: Dict[str, _InFlight] = {}
 
     def _make_key(self, tool_name: str, args: tuple, kwargs: dict) -> str:
         raw = json.dumps({"tool": tool_name, "args": list(args), "kwargs": kwargs}, sort_keys=True, default=str)
         return hashlib.sha256(raw.encode()).hexdigest()
+
+    # -- single-flight helpers --------------------------------------------------
+
+    def try_join_flight(self, key: str) -> Optional[_InFlight]:
+        """If an identical call is already in-flight, register as a waiter and return the flight."""
+        with self._lock:
+            flight = self._flights.get(key)
+            if flight is not None:
+                flight.waiters += 1
+                return flight
+            return None
+
+    def begin_flight(self, key: str) -> _InFlight:
+        """Register a new in-flight execution.  Must be called under no existing flight for *key*."""
+        flight = _InFlight()
+        with self._lock:
+            self._flights[key] = flight
+        return flight
+
+    def end_flight(self, key: str, result: Any = None, error: BaseException | None = None) -> int:
+        """Complete an in-flight execution, wake waiters, and remove the flight.
+
+        Returns the number of waiters that were coalesced.
+        """
+        with self._lock:
+            flight = self._flights.pop(key, None)
+        if flight is None:
+            return 0
+        flight.result = result
+        flight.error = error
+        waiters = flight.waiters
+        flight.event.set()
+        return waiters
+
+    # -- cache operations -------------------------------------------------------
 
     def lookup(self, tool_name: str, args: tuple, kwargs: dict) -> Optional[CacheEntry]:
         key = self._make_key(tool_name, args, kwargs)

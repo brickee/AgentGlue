@@ -17,6 +17,7 @@ That creates a predictable set of problems:
 
 The first usable pass stays intentionally narrow:
 - exact-match tool-call dedup
+- **in-flight coalescing (single-flight)** — concurrent identical calls share one execution
 - TTL result cache
 - cache invalidation API
 - baseline metrics + event recording
@@ -112,6 +113,7 @@ print(summary["cache_hit_rate"])
 - observed tool calls
 - underlying tool executions
 - calls saved by dedup
+- **coalesced calls (single-flight)**
 - dedup rate
 - cache hit rate
 - average observed latency
@@ -126,11 +128,12 @@ print(summary["cache_hit_rate"])
 
 What is working now:
 - exact-match dedup keyed by tool name + args/kwargs hash
+- in-flight coalescing (single-flight): concurrent identical calls wait for the leader's result
 - TTL expiry
 - cache invalidation and full-cache clearing
-- text report + dict summary
-- event recording for tool calls, dedup hits, and completions
-- smoke tests covering the main path
+- text report + dict summary (includes `tool_calls_coalesced` metric)
+- event recording for tool calls, dedup hits, coalesced waits, and completions
+- smoke tests covering the main path including concurrent single-flight
 
 What remains intentionally deferred:
 - semantic dedup
@@ -163,7 +166,7 @@ That writes stable JSON/JSONL/Markdown artifacts under `artifacts/benchmarks/<la
 - recorder-backed duplicate analysis
 - a concurrent identical-call probe
 
-Current concurrency caveat: exact-match dedup works once a result is already cached, but the concurrent probe shows AgentGlue does **not** yet coalesce in-flight identical calls.
+The concurrent probe now confirms single-flight coalescing: two simultaneous identical calls result in 1 underlying execution and 1 coalesced waiter.
 
 ## Design principles
 

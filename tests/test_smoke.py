@@ -200,49 +200,120 @@ def test_detect_duplicates_understands_runtime_dedup_events():
     assert duplicates["duplicate_intents"][0]["deduped_calls"] == 1
 
 
-def test_concurrent_identical_calls_do_not_single_flight_today():
+def test_single_flight_coalesces_concurrent_identical_calls():
+    """Two concurrent identical calls should result in only ONE underlying execution."""
     glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False, dedup_ttl=60.0)
-    barrier = threading.Barrier(2)
     call_count = 0
     call_lock = threading.Lock()
+    entered = threading.Event()
 
     @glue.tool(ttl=60.0)
     def slow_lookup(x):
         nonlocal call_count
-        barrier.wait(timeout=1.0)
-        time.sleep(0.05)
+        entered.set()  # signal that leader has entered the function
+        time.sleep(0.1)  # hold long enough for second thread to arrive
         with call_lock:
             call_count += 1
             current = call_count
         return f"value-{x}-{current}"
 
-    results = []
+    results = {}
 
     def invoke(agent_id: str) -> None:
-        results.append(slow_lookup("same", agent_id=agent_id))
+        results[agent_id] = slow_lookup("same", agent_id=agent_id)
+
+    t1 = threading.Thread(target=invoke, args=("agent-a",))
+    t1.start()
+    entered.wait(timeout=2.0)  # wait for leader to start executing
+    # Now launch the second thread — it should join the in-flight execution
+    t2 = threading.Thread(target=invoke, args=("agent-b",))
+    t2.start()
+    t1.join()
+    t2.join()
+
+    # Single-flight: only 1 underlying execution
+    assert call_count == 1, f"expected 1 underlying call, got {call_count}"
+    # Both agents get the same result
+    assert results["agent-a"] == results["agent-b"] == "value-same-1"
+    # Post-flight call also deduped from cache
+    post_result = slow_lookup("same", agent_id="agent-c")
+    assert post_result == "value-same-1"
+
+    assert glue.metrics.tool_calls_total == 3
+    assert glue.metrics.tool_calls_underlying == 1
+    # 1 coalesced (the waiter) + 1 cache dedup (agent-c)
+    assert glue.metrics.tool_calls_deduped == 2
+    assert glue.metrics.tool_calls_coalesced == 1
+
+    # Events should include the coalesced event type
+    event_types = [e["event_type"] for e in glue.recorder.events]
+    assert "tool_call_coalesced" in event_types
+
+
+def test_single_flight_different_args_not_coalesced():
+    """Calls with different args should NOT be coalesced."""
+    glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False, dedup_ttl=60.0)
+    call_count = 0
+    call_lock = threading.Lock()
+
+    @glue.tool(ttl=60.0)
+    def lookup(x):
+        nonlocal call_count
+        time.sleep(0.02)
+        with call_lock:
+            call_count += 1
+        return f"result-{x}"
+
+    results = {}
+
+    def invoke(agent_id: str, arg: str) -> None:
+        results[agent_id] = lookup(arg, agent_id=agent_id)
 
     threads = [
-        threading.Thread(target=invoke, args=("agent-a",)),
-        threading.Thread(target=invoke, args=("agent-b",)),
+        threading.Thread(target=invoke, args=("agent-a", "alpha")),
+        threading.Thread(target=invoke, args=("agent-b", "beta")),
     ]
     for thread in threads:
         thread.start()
     for thread in threads:
         thread.join()
 
-    post_result = slow_lookup("same", agent_id="agent-c")
-
     assert call_count == 2
-    assert len(results) == 2
-    assert sorted(results) == ["value-same-1", "value-same-2"]
-    assert post_result in results
-    assert glue.metrics.tool_calls_total == 3
-    assert glue.metrics.tool_calls_underlying == 2
-    assert glue.metrics.tool_calls_deduped == 1
+    assert results["agent-a"] == "result-alpha"
+    assert results["agent-b"] == "result-beta"
+    assert glue.metrics.tool_calls_coalesced == 0
 
-    duplicates = detect_duplicates(glue.recorder.events if glue.recorder else [])
-    assert duplicates["total_duplicates"] == 1
-    assert duplicates["by_agent"] == {"agent-c": 1}
+
+def test_single_flight_error_propagates_to_waiters():
+    """If the leader raises, waiters should also see the error."""
+    glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False, dedup_ttl=60.0)
+    entered = threading.Event()
+
+    @glue.tool(ttl=60.0)
+    def failing_tool(x):
+        entered.set()
+        time.sleep(0.1)
+        raise ValueError("boom")
+
+    errors = {}
+
+    def invoke(agent_id: str) -> None:
+        try:
+            failing_tool("same", agent_id=agent_id)
+        except (ValueError, BaseException) as e:
+            errors[agent_id] = str(e)
+
+    t1 = threading.Thread(target=invoke, args=("agent-a",))
+    t1.start()
+    entered.wait(timeout=2.0)
+    t2 = threading.Thread(target=invoke, args=("agent-b",))
+    t2.start()
+    t1.join()
+    t2.join()
+
+    assert len(errors) == 2
+    assert errors["agent-a"] == "boom"
+    assert errors["agent-b"] == "boom"
 
 
 if __name__ == "__main__":
@@ -260,7 +331,9 @@ if __name__ == "__main__":
         test_glue_integration_and_invalidation,
         test_glue_report_and_events,
         test_detect_duplicates_understands_runtime_dedup_events,
-        test_concurrent_identical_calls_do_not_single_flight_today,
+        test_single_flight_coalesces_concurrent_identical_calls,
+        test_single_flight_different_args_not_coalesced,
+        test_single_flight_error_propagates_to_waiters,
     ]
     for test_fn in tests:
         try:

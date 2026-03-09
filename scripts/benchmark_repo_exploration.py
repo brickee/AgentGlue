@@ -245,15 +245,15 @@ def run_repo_exploration_agentglue(ttl: float) -> Dict[str, Any]:
 
 def run_concurrent_probe() -> Dict[str, Any]:
     glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False, dedup_ttl=60.0)
-    barrier = threading.Barrier(2)
     call_count = 0
     call_lock = threading.Lock()
+    entered = threading.Event()
 
     @glue.tool(ttl=60.0)
     def slow_lookup(x: str) -> str:
         nonlocal call_count
-        barrier.wait(timeout=1.0)
-        time.sleep(0.05)
+        entered.set()
+        time.sleep(0.1)
         with call_lock:
             call_count += 1
             current = call_count
@@ -265,18 +265,18 @@ def run_concurrent_probe() -> Dict[str, Any]:
         results[agent_id] = slow_lookup("same", agent_id=agent_id)
 
     started = time.monotonic()
-    threads = [
-        threading.Thread(target=invoke, args=("agent-a",)),
-        threading.Thread(target=invoke, args=("agent-b",)),
-    ]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
+    t1 = threading.Thread(target=invoke, args=("agent-a",))
+    t1.start()
+    entered.wait(timeout=2.0)
+    t2 = threading.Thread(target=invoke, args=("agent-b",))
+    t2.start()
+    t1.join()
+    t2.join()
     post_result = slow_lookup("same", agent_id="agent-c")
     wall_clock_ms = (time.monotonic() - started) * 1000.0
 
     events = glue.recorder.events if glue.recorder else []
+    coalesced = glue.metrics.tool_calls_coalesced
     return {
         "mode": "agentglue",
         "scenario": "concurrent_probe",
@@ -284,12 +284,13 @@ def run_concurrent_probe() -> Dict[str, Any]:
         "results": results,
         "post_result": post_result,
         "underlying_call_count": call_count,
+        "coalesced_calls": coalesced,
         "summary": {**glue.summary(), "wall_clock_ms": round(wall_clock_ms, 3)},
         "events": events,
         "duplicate_analysis": detect_duplicates(events),
         "finding": (
-            "Concurrent identical calls both executed underlying work; only the later post-flight call was deduped. "
-            "This shows cache-after-first-call behavior, not in-flight single-flight coalescing."
+            "Single-flight coalescing active: concurrent identical calls share the first execution's result. "
+            f"Underlying executions: {call_count}, coalesced waiters: {coalesced}."
         ),
     }
 
@@ -344,12 +345,13 @@ def write_markdown_summary(path: Path, benchmark: Dict[str, Any], concurrent_pro
         "## Concurrent probe",
         "",
         f"- underlying_call_count: **{concurrent_probe['underlying_call_count']}**",
+        f"- coalesced_calls: **{concurrent_probe.get('coalesced_calls', 'N/A')}**",
         f"- deduped_calls_in_metrics: **{concurrent_probe['summary']['tool_calls_deduped']}**",
         f"- finding: {concurrent_probe['finding']}",
         "",
-        "## Recommendation",
+        "## Notes",
         "",
-        "Implement in-flight coalescing only if you want AgentGlue to claim shared-tool dedup under true concurrent pressure. The current evidence says the v0.1 path is exact-match TTL cache + post-first-call dedup, which is useful but narrower.",
+        "Single-flight coalescing is now active: concurrent identical calls share the leader's execution result instead of both executing. Combined with TTL-based cache, this covers both sequential and concurrent dedup scenarios.",
     ])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

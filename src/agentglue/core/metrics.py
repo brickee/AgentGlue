@@ -20,6 +20,7 @@ class GlueMetrics:
     tool_calls_total: int = 0
     tool_calls_underlying: int = 0
     tool_calls_deduped: int = 0
+    tool_calls_coalesced: int = 0
     cache_hits: int = 0
     cache_misses: int = 0
     latency_observed_ms: float = 0.0
@@ -56,6 +57,11 @@ class GlueMetrics:
                 self.cache_hits += 1
             else:
                 self.cache_misses += 1
+
+    def record_coalesced(self, count: int = 1) -> None:
+        """Record calls that joined an in-flight execution (single-flight)."""
+        with self._lock:
+            self.tool_calls_coalesced += count
 
     def record_rate_limit(self, wait_ms: float = 0.0) -> None:
         with self._lock:
@@ -116,6 +122,7 @@ class GlueMetrics:
             "tool_calls_total": self.tool_calls_total,
             "tool_calls_underlying": self.tool_calls_underlying,
             "tool_calls_deduped": self.tool_calls_deduped,
+            "tool_calls_coalesced": self.tool_calls_coalesced,
             "calls_saved": self.calls_saved,
             "dedup_rate": self.dedup_rate,
             "cache_hit_rate": self.cache_hit_rate,
@@ -133,6 +140,7 @@ class GlueMetrics:
             f"  Observed tool calls:      {self.tool_calls_total}",
             f"  Underlying executions:    {self.tool_calls_underlying}",
             f"  Calls saved by dedup:     {self.calls_saved}/{self.tool_calls_total} ({self.dedup_rate:.0%})",
+            f"  Coalesced (single-flight): {self.tool_calls_coalesced}",
             f"  Cache hit rate:           {self.cache_hit_rate:.0%}",
             f"  Avg observed latency:     {self.avg_observed_latency_ms:.2f} ms",
             f"  Avg underlying latency:   {self.avg_underlying_latency_ms:.2f} ms",
