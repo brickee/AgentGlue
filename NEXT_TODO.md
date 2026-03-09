@@ -13,4 +13,4 @@
 8. Tighten shared-memory metrics on the runtime path.
 9. Add a minimal integration adapter skeleton (likely CrewAI or LangGraph).
 10. Improve rate-limit ergonomics if the benchmark shows real pressure there.
-11. Decide whether the lightweight benchmark sanity check should stay local-only or become a small CI guard once artifact stability feels boring.
+11. ~~Decide whether the lightweight benchmark sanity check should stay local-only or become a small CI guard once artifact stability feels boring.~~ — **Done.** The benchmark harness now supports `--target-repo`, smoke coverage runs it against `tests/fixture_repo`, and a tiny GitHub Actions workflow covers pytest + executable examples.

@@ -110,3 +110,20 @@
 - JSONL export is now a real inspectable workflow rather than a hidden method on the recorder.
 - Benchmark artifacts are a little harder to accidentally misread or quietly regress.
 - This keeps the wedge narrow: better observability ergonomics and benchmark credibility, not new product sprawl.
+
+## 2026-03-09 — self-contained benchmark sanity path + tiny CI
+- Extended `scripts/benchmark_repo_exploration.py` with `--target-repo` so the harness is no longer tied only to one local external checkout.
+- Added `tests/fixture_repo/`, a tiny deterministic repo shaped like the benchmark scenarios expect.
+- Added smoke coverage that:
+  - runs the benchmark harness against the fixture repo
+  - validates the produced artifact with `scripts/check_benchmark_result.py`
+- Added a minimal GitHub Actions workflow to run:
+  - `pytest -q`
+  - `examples/basic_report.py`
+  - `examples/recorder_export.py`
+- Updated `README.md` and `NEXT_TODO.md` to reflect that benchmark sanity is now partly CI-backed rather than purely local.
+
+### Why this matters
+- The benchmark path is more credible because it now has a self-contained regression check.
+- CI coverage stays intentionally small: verify the narrow v0.1 path, not a bunch of speculative integrations.
+- This is a cleaner answer to “can I trust these benchmark artifacts?” than telling people to reproduce a very specific local machine setup.

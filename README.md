@@ -182,6 +182,12 @@ Current benchmark harness:
 PYTHONPATH=src python3 scripts/benchmark_repo_exploration.py --runs 3 --label local_run
 ```
 
+If you want a self-contained smoke run without relying on a separate local checkout, point it at the tiny fixture repo used by tests:
+
+```bash
+PYTHONPATH=src python3 scripts/benchmark_repo_exploration.py --runs 1 --label fixture_run --target-repo tests/fixture_repo
+```
+
 That writes stable JSON/JSONL/Markdown artifacts under `artifacts/benchmarks/<label>/`, including:
 - repeated baseline vs AgentGlue runs
 - **two scenarios**: a clean repo-exploration overlap path and a messier partial-overlap path
@@ -239,6 +245,8 @@ Sanity-check a benchmark artifact after generation:
 ```bash
 PYTHONPATH=src python3 scripts/check_benchmark_result.py artifacts/benchmarks/local_run/result.json
 ```
+
+The repo also includes a tiny GitHub Actions workflow that runs pytest plus the executable examples, and the test suite now exercises the benchmark harness against `tests/fixture_repo` so the benchmark sanity path is no longer local-machine-only.
 
 ## Disclaimer
 

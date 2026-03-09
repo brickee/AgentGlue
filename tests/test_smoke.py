@@ -1,7 +1,11 @@
 """Smoke tests for AgentGlue v0.1 core functionality."""
 
+import json
+import os
+import subprocess
 import threading
 import time
+from pathlib import Path
 
 from agentglue import AgentGlue
 from agentglue.core.allocator import RateLimiter
@@ -337,6 +341,43 @@ def test_export_events_jsonl_roundtrip(tmp_path):
     assert exported["metrics"]["tool_calls_deduped"] == 1
     assert reloaded["event_count"] == exported["event_count"]
     assert reloaded["duplicate_analysis"] == exported["duplicate_analysis"]
+
+
+def test_benchmark_harness_supports_fixture_repo(tmp_path):
+    repo_root = Path(__file__).resolve().parents[1]
+    fixture_repo = repo_root / "tests" / "fixture_repo"
+    artifact_root = tmp_path / "benchmarks"
+
+    command = [
+        "python3",
+        str(repo_root / "scripts" / "benchmark_repo_exploration.py"),
+        "--runs",
+        "1",
+        "--label",
+        "fixture_smoke",
+        "--artifact-root",
+        str(artifact_root),
+        "--target-repo",
+        str(fixture_repo),
+    ]
+    env = {**os.environ, "PYTHONPATH": str(repo_root / "src")}
+    result = subprocess.run(command, check=True, capture_output=True, text=True, env=env)
+    payload = json.loads(result.stdout)
+
+    result_json = Path(payload["result_json"])
+    check = subprocess.run(
+        ["python3", str(repo_root / "scripts" / "check_benchmark_result.py"), str(result_json)],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    checked = json.loads(check.stdout)
+
+    assert payload["concurrent_underlying_call_count"] == 1
+    assert checked["ok"] is True
+    assert result_json.exists()
+    assert Path(payload["summary_md"]).exists()
 
 
 if __name__ == "__main__":

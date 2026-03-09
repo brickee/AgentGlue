@@ -30,7 +30,7 @@ if str(SRC_ROOT) not in sys.path:
 from agentglue import AgentGlue  # noqa: E402
 from agentglue.core.recorder import detect_duplicates  # noqa: E402
 
-TARGET_REPO = Path("/home/ubuntu/.openclaw/workspace/projects/AgentGym")
+DEFAULT_TARGET_REPO = Path("/home/ubuntu/.openclaw/workspace/projects/AgentGym")
 DEFAULT_ARTIFACT_ROOT = REPO_ROOT / "artifacts" / "benchmarks"
 DEFAULT_SCENARIOS = ["repo_exploration", "partial_overlap"]
 
@@ -123,11 +123,11 @@ class ExecLogger:
         )
 
 
-def make_repo_tools(exec_logger: ExecLogger) -> Tuple[Callable[..., str], Callable[..., str], Callable[..., str]]:
+def make_repo_tools(exec_logger: ExecLogger, target_repo: Path) -> Tuple[Callable[..., str], Callable[..., str], Callable[..., str]]:
     def list_files(path: str, max_entries: int = 40) -> str:
         started = time.monotonic()
         cmd = (
-            f"cd {TARGET_REPO} && "
+            f"cd {json.dumps(str(target_repo))} && "
             f"find {json.dumps(path)} -type f | sed 's#^./##' | sort | head -n {int(max_entries)}"
         )
         out = run_shell(cmd)
@@ -137,7 +137,7 @@ def make_repo_tools(exec_logger: ExecLogger) -> Tuple[Callable[..., str], Callab
     def search_code(pattern: str, scope: str = "src tests", max_hits: int = 20) -> str:
         started = time.monotonic()
         cmd = (
-            f"cd {TARGET_REPO} && "
+            f"cd {json.dumps(str(target_repo))} && "
             f"grep -RIn --binary-files=without-match -E {json.dumps(pattern)} {scope} | head -n {int(max_hits)}"
         )
         out = run_shell(cmd)
@@ -146,7 +146,7 @@ def make_repo_tools(exec_logger: ExecLogger) -> Tuple[Callable[..., str], Callab
 
     def read_file(path: str, start_line: int = 1, end_line: int = 120) -> str:
         started = time.monotonic()
-        cmd = f"cd {TARGET_REPO} && sed -n '{int(start_line)},{int(end_line)}p' {json.dumps(path)}"
+        cmd = f"cd {json.dumps(str(target_repo))} && sed -n '{int(start_line)},{int(end_line)}p' {json.dumps(path)}"
         out = run_shell(cmd)
         exec_logger.log("read_file", {"path": path, "start_line": start_line, "end_line": end_line}, cmd, out, (time.monotonic() - started) * 1000)
         return out
@@ -207,9 +207,13 @@ def aggregate_runs(runs: List[Dict[str, Any]]) -> Dict[str, Any]:
     return aggregate
 
 
-def run_scenario_baseline(scenario_name: str, plan: Dict[str, List[Tuple[str, Dict[str, Any]]]]) -> Dict[str, Any]:
+def run_scenario_baseline(
+    scenario_name: str,
+    plan: Dict[str, List[Tuple[str, Dict[str, Any]]]],
+    target_repo: Path,
+) -> Dict[str, Any]:
     exec_logger = ExecLogger()
-    list_files, search_code, read_file = make_repo_tools(exec_logger)
+    list_files, search_code, read_file = make_repo_tools(exec_logger, target_repo)
     tool_map = {"list_files": list_files, "search_code": search_code, "read_file": read_file}
 
     observed_calls = []
@@ -237,9 +241,14 @@ def run_scenario_baseline(scenario_name: str, plan: Dict[str, List[Tuple[str, Di
     }
 
 
-def run_scenario_agentglue(scenario_name: str, plan: Dict[str, List[Tuple[str, Dict[str, Any]]]], ttl: float) -> Dict[str, Any]:
+def run_scenario_agentglue(
+    scenario_name: str,
+    plan: Dict[str, List[Tuple[str, Dict[str, Any]]]],
+    ttl: float,
+    target_repo: Path,
+) -> Dict[str, Any]:
     exec_logger = ExecLogger()
-    base_list_files, base_search_code, base_read_file = make_repo_tools(exec_logger)
+    base_list_files, base_search_code, base_read_file = make_repo_tools(exec_logger, target_repo)
 
     glue = AgentGlue(shared_memory=False, rate_limiter=False, task_lock=False, dedup_ttl=ttl)
     tool_map = {
@@ -330,10 +339,10 @@ def run_concurrent_probe() -> Dict[str, Any]:
     }
 
 
-def run_scenario_harness(scenario_name: str, runs: int, ttl: float) -> Dict[str, Any]:
+def run_scenario_harness(scenario_name: str, runs: int, ttl: float, target_repo: Path) -> Dict[str, Any]:
     plan = SCENARIO_PLANS[scenario_name]
-    baseline_runs = [run_scenario_baseline(scenario_name, plan) for _ in range(runs)]
-    glue_runs = [run_scenario_agentglue(scenario_name, plan, ttl=ttl) for _ in range(runs)]
+    baseline_runs = [run_scenario_baseline(scenario_name, plan, target_repo=target_repo) for _ in range(runs)]
+    glue_runs = [run_scenario_agentglue(scenario_name, plan, ttl=ttl, target_repo=target_repo) for _ in range(runs)]
     return {
         "scenario": scenario_name,
         "plan_summary": {
@@ -426,6 +435,11 @@ def main() -> None:
     parser.add_argument("--label", default="repo_exploration")
     parser.add_argument("--artifact-root", default=str(DEFAULT_ARTIFACT_ROOT))
     parser.add_argument(
+        "--target-repo",
+        default=str(DEFAULT_TARGET_REPO),
+        help="Repository to benchmark against. Defaults to the local AgentGym checkout.",
+    )
+    parser.add_argument(
         "--scenario",
         dest="scenarios",
         action="append",
@@ -435,12 +449,15 @@ def main() -> None:
     args = parser.parse_args()
 
     scenarios = args.scenarios or list(DEFAULT_SCENARIOS)
+    target_repo = Path(args.target_repo).resolve()
+    if not target_repo.exists():
+        raise FileNotFoundError(f"target repo does not exist: {target_repo}")
     artifact_dir = Path(args.artifact_root) / args.label
     artifact_dir.mkdir(parents=True, exist_ok=True)
 
     metadata = {
         "label": args.label,
-        "target_repo": str(TARGET_REPO),
+        "target_repo": str(target_repo),
         "scenarios": scenarios,
         "runs": args.runs,
         "dedup_ttl_s": args.dedup_ttl,
@@ -448,7 +465,7 @@ def main() -> None:
     }
 
     scenario_results = {
-        scenario_name: run_scenario_harness(scenario_name, runs=args.runs, ttl=args.dedup_ttl)
+        scenario_name: run_scenario_harness(scenario_name, runs=args.runs, ttl=args.dedup_ttl, target_repo=target_repo)
         for scenario_name in scenarios
     }
     concurrent_probe = run_concurrent_probe()
