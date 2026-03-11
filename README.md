@@ -130,6 +130,58 @@ summary = summarize_jsonl("artifacts/examples/my_run.events.jsonl")
 print(summary["duplicate_analysis"]["total_duplicates"])
 ```
 
+## Framework Integration
+
+AgentGlue is framework-agnostic. The `@glue.tool()` decorator wraps any Python function, so it works with any agent framework that calls Python callables.
+
+**CrewAI:**
+
+```python
+from crewai_tools import tool
+from agentglue import AgentGlue
+
+glue = AgentGlue()
+
+@glue.tool(ttl=60)
+@tool("Search codebase")
+def search_code(query: str) -> str:
+    """Search the codebase for relevant code."""
+    return run_search(query)
+```
+
+**LangGraph:**
+
+```python
+from langchain_core.tools import tool
+from agentglue import AgentGlue
+
+glue = AgentGlue()
+
+@glue.tool(ttl=60)
+@tool
+def read_file(path: str) -> str:
+    """Read a file from the codebase."""
+    return open(path).read()
+```
+
+**AutoGen:**
+
+```python
+from agentglue import AgentGlue
+
+glue = AgentGlue()
+
+@glue.tool(ttl=60)
+def list_files(directory: str) -> list:
+    """List files in a directory."""
+    return os.listdir(directory)
+
+# Register with AutoGen agent
+# agent.register_for_execution()(list_files)
+```
+
+The pattern is the same: wrap your tool function with `@glue.tool()`, then register it with your framework as usual. AgentGlue intercepts calls, deduplicates, caches, and records metrics — transparently to the framework.
+
 ## What v0.1 measures
 
 - observed tool calls
@@ -162,7 +214,6 @@ What remains intentionally deferred:
 - production-grade shared memory
 - real cross-agent rate coordination policy layer
 - task-lock productization
-- framework integration adapters
 
 ## Benchmark recommendation
 

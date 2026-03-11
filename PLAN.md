@@ -67,13 +67,13 @@ Tools / APIs
 - [x] Add recorder analysis that matches runtime dedup events (`tool_call_deduped`)
 - [x] Add a concurrent identical-call probe to test cache-vs-coalescing behavior
 - [ ] Optional second scenario: SWE-style search/read/test loop
-- [ ] Decide whether single-flight coalescing belongs in the near-term core path
+- [x] Decide whether single-flight coalescing belongs in the near-term core path — **Done.** Concurrent identical calls now share the leader's result.
 
 ### M2 — Shared Memory
 - [ ] Tighten `SharedMemory` semantics (TTL, confidence, scoping)
-- [ ] Decide whether auto-publish should stay default-on or become explicit
-- [ ] Add metrics hooks for reads/writes/hits/misses on the real runtime path
-- [ ] Tests
+- [x] ~~Decide whether auto-publish should stay default-on or become explicit~~ — **Done.** Now opt-in (`shared_memory=False` by default).
+- [x] Add metrics hooks for reads/writes/hits/misses on the real runtime path — **Done.** `SharedMemoryMetrics` with hit_rate.
+- [ ] Tests for shared memory path (currently scaffolded only)
 
 ### M3 — Rate Coordination
 - [ ] Promote `RateLimiter` into a clearer `RateCoordinator` story if warranted
