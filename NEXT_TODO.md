@@ -8,7 +8,7 @@
 
 ## Next
 5. ~~Tighten shared-memory metrics on the runtime path so optional reads/writes are measurable without inflating the default product claim.~~ — **Done.** `SharedMemory` now has honest metrics: writes, reads, hits, misses, stale_reads, private_access_denied, hit_rate. Docs clearly state it's optional/scaffolded.
-6. Decide whether to regenerate benchmark artifacts under a clearly archived / historical directory so old AgentGym-based runs stop looking current.
+6. ~~Archive old AgentGym-era benchmark artifacts~~ — **Done.** Moved all AgentGym-targeted benchmark runs to `artifacts/_archived_agentgym_era/` and `artifacts/benchmarks/_archived_agentgym_era/` with README explaining they're historical only. Current canonical benchmark is `standalone_default_smoke/`.
 7. Add semantic dedup only if exact-match dedup leaves obvious savings on the table.
 8. Add a minimal integration adapter skeleton (likely CrewAI or LangGraph).
 9. Improve rate-limit ergonomics if the benchmark shows real pressure there.
