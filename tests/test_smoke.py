@@ -78,6 +78,71 @@ def test_shared_memory_confidence():
     assert mem.read("key2") == "value2"
 
 
+def test_shared_memory_metrics():
+    """SharedMemory tracks writes, reads, hits, misses, stale reads."""
+    mem = SharedMemory(default_ttl=0.1)  # short TTL for staleness test
+
+    # Write some entries
+    mem.write("key1", "value1", agent_id="agent-a")
+    mem.write("key2", "value2", agent_id="agent-b", scope="private")
+
+    m = mem.metrics
+    assert m.writes == 2
+    assert m.reads == 0
+
+    # Read hit
+    assert mem.read("key1") == "value1"
+    m = mem.metrics
+    assert m.reads == 1
+    assert m.hits == 1
+    assert mem.hit_rate == 1.0
+
+    # Read miss (key not found)
+    assert mem.read("nonexistent") is None
+    m = mem.metrics
+    assert m.reads == 2
+    assert m.hits == 1
+    assert m.misses == 1
+    assert mem.hit_rate == 0.5
+
+    # Read private entry from different agent (access denied)
+    assert mem.read("key2", agent_id="agent-a") is None
+    m = mem.metrics
+    assert m.private_access_denied == 1
+
+    # Wait for TTL expiry
+    time.sleep(0.15)
+    assert mem.read("key1") is None
+    m = mem.metrics
+    assert m.stale_reads == 1
+
+    # Summary includes all metrics
+    summary = mem.summary()
+    assert summary["writes"] == 2
+    assert summary["reads"] == 4
+    assert summary["hits"] == 1
+    assert summary["misses"] == 1
+    assert summary["stale_reads"] == 1
+    assert summary["private_access_denied"] == 1
+
+
+def test_shared_memory_hit_rate():
+    """hit_rate is computed correctly."""
+    mem = SharedMemory()
+
+    # No reads yet
+    assert mem.hit_rate == 0.0
+
+    mem.write("a", 1)
+    mem.write("b", 2)
+
+    mem.read("a")  # hit
+    mem.read("a")  # hit
+    mem.read("c")  # miss
+
+    assert mem.hit_rate == 2 / 3
+
+
 def test_task_lock_basic():
     lock = TaskLock()
     ok1, _ = lock.acquire("task-1", "agent-a")
@@ -395,6 +460,8 @@ if __name__ == "__main__":
         test_shared_memory_basic,
         test_shared_memory_private_scope,
         test_shared_memory_confidence,
+        test_shared_memory_metrics,
+        test_shared_memory_hit_rate,
         test_task_lock_basic,
         test_task_lock_reentrant,
         test_rate_limiter,
