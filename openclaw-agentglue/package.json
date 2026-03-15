@@ -1,16 +1,20 @@
 {
   "name": "openclaw-agentglue",
-  "version": "0.1.0",
-  "description": "OpenClaw plugin for AgentGlue middleware integration",
+  "version": "0.2.0",
+  "description": "OpenClaw plugin for AgentGlue middleware integration with repo exploration tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "verify": "node -e \"console.log('Plugin structure OK'); require('./dist/index.js')\""
   },
-  "keywords": ["openclaw", "plugin", "agentglue"],
+  "keywords": ["openclaw", "plugin", "agentglue", "deduplication", "repo-exploration"],
   "author": "",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
     "@types/node": "^20.0.0"

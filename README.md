@@ -79,6 +79,27 @@ AgentGlue Report:
   Task conflicts prevented: 0
 ```
 
+## Integrations
+
+### OpenClaw Plugin
+
+AgentGlue is available as an OpenClaw plugin for seamless integration:
+
+```bash
+# Located in openclaw-agentglue/ directory
+cd openclaw-agentglue
+npm install && npm run build
+```
+
+**Features:**
+- Auto-managed Python sidecar with health monitoring
+- 3 production-ready repo exploration tools (`deduped_search`, `deduped_read_file`, `deduped_list_files`)
+- Automatic crash recovery with configurable restarts
+- Full config schema validation
+- Built-in metrics and health endpoints
+
+See [`openclaw-agentglue/README.md`](./openclaw-agentglue/README.md) for full documentation.
+
 ## API
 
 ### Wrap a tool
