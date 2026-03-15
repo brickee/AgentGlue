@@ -4,14 +4,26 @@
   "description": "OpenClaw plugin for AgentGlue middleware integration with repo exploration tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "sidecar/",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "verify": "node -e \"console.log('Plugin structure OK'); require('./dist/index.js')\""
+    "verify": "node -e \"console.log('Plugin structure OK'); require('./dist/index.js')\"",
+    "prepublishOnly": "npm run build"
   },
   "keywords": ["openclaw", "plugin", "agentglue", "deduplication", "repo-exploration"],
-  "author": "",
+  "author": "Patrick",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brickee/agentglue.git",
+    "directory": "openclaw-agentglue"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
