@@ -1,0 +1,19 @@
+{
+  "name": "openclaw-agentglue",
+  "version": "0.1.0",
+  "description": "OpenClaw plugin for AgentGlue middleware integration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["openclaw", "plugin", "agentglue"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {}
+}

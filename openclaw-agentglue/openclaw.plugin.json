@@ -1,0 +1,37 @@
+{
+  "id": "openclaw-agentglue",
+  "name": "AgentGlue",
+  "version": "0.1.0",
+  "description": "AgentGlue middleware integration for OpenClaw",
+  "entry": "dist/index.js",
+  "sidecar": {
+    "command": "python3",
+    "args": ["sidecar/server.py"],
+    "cwd": "${pluginDir}",
+    "port": 8765
+  },
+  "tools": [
+    {
+      "name": "agentglue_search",
+      "description": "Search using AgentGlue-wrapped tool with deduplication and metrics",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "agentglue_metrics",
+      "description": "Get AgentGlue runtime metrics report",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

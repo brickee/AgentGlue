@@ -1,0 +1,8 @@
+# AgentGlue Sidecar Dependencies
+# These are installed in addition to AgentGlue itself
+
+# HTTP server (stdlib only, no external deps needed for basic server)
+# If we need async later: uvicorn, fastapi
+
+# AgentGlue is loaded from parent directory, not PyPI
+# See sidecar/server.py for path setup
