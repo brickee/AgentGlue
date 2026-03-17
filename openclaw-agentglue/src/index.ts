@@ -394,7 +394,7 @@ const agentGluePlugin = {
       },
     });
 
-    log('Plugin registered (v0.3.0, SQLite backend)');
+    log('Plugin registered (v0.3.2, SQLite backend)');
   },
 };
 
