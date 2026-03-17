@@ -4,4 +4,6 @@ node_modules/
 !*.d.ts
 tsconfig.json
 **/__pycache__/
+sidecar/__pycache__/
+python/**/__pycache__/
 *.pyc
