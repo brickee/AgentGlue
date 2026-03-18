@@ -56,11 +56,11 @@ Measured on the current **100-test benchmark suite** and **overlap-heavy multi-a
 ┃         (Coordination Middleware)                 ┃    The "glue" that binds
 ┃                                                   ┃    agents to resources
 ┃  ┌──────────┬──────────┬──────────┬──────────┐    ┃
-┃  │ Registry │  Router  │ State    │   Auth   │    ┃    · Registry:  discover tools
-┃  │          │          │ Manager  │          │    ┃    · Router:    dispatch calls
-┃  └──────────┴──────────┴──────────┴──────────┘    ┃    · StateMgr:  share context
-┃                                                   ┃    · Auth:      access control
-┃  "Know how to connect"                            ┃
+┃  │ Dedup &  │  Rate    │ Task     │   Shared │    ┃    · Dedup & coalescing
+┃  │coalescing│  Mgr     │ Locking  │   Cache  │    ┃    · Rate coordination
+┃  └──────────┴──────────┴──────────┴──────────┘    ┃    · Task Locking
+┃                                                   ┃    · Shared Cache
+┃  "Know how to coordinate"                         ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃  🔧 Tools    📡 APIs    📁 Files    💾 State       ┃  ← Resource Layer
 ┃                                                   ┃    External capabilities
