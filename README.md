@@ -105,6 +105,14 @@ cd AgentGlue
 
 ### 3) Install the Python package
 
+From PyPI:
+
+```bash
+pip install agentglue
+```
+
+Or from source:
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
