@@ -62,7 +62,7 @@ Measured on the current **100-test benchmark suite** and **overlap-heavy multi-a
 ┃                                                   ┃    · Shared Cache
 ┃  "Know how to coordinate"                         ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃  🔧 Tools    📡 APIs    📁 Files    💾 State       ┃  ← Resource Layer
+┃  🔧 Tools    📡 APIs    📁 Files    💾 Memory      ┃  ← Resource Layer
 ┃                                                   ┃    External capabilities
 ┃  "Do the actual work"                             ┃    & persistent storage
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
