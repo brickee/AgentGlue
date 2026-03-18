@@ -46,18 +46,11 @@ Measured on the current **100-test benchmark suite** and **overlap-heavy multi-a
 
 ## 🧭 How it works
 
-```text
-Agent framework / orchestrator
-          ↓
-       AgentGlue
-  (coordination middleware)
-          ↓
-        tools / APIs
-```
+<p align="center">
+  <img src="docs/how-it-works.svg" alt="How AgentGlue works" width="100%" />
+</p>
 
-If two agents make the **same** tool call at the same time, **one execution leads** and the others wait.
-If a later agent makes the **same** call again within TTL, it gets the **cached result**.
-If the calls are merely similar, AgentGlue does **not** pretend they are identical.
+<p align="center"><em>AgentGlue sits between the orchestrator and the tool layer, coordinating repeated work across agents and processes.</em></p>
 
 ## 🛠 Install
 
@@ -122,6 +115,10 @@ print(glue.report())
 - **GitHub releases:** <https://github.com/brickee/AgentGlue/releases>
 - **OpenClaw plugin:** <https://www.npmjs.com/package/openclaw-agentglue>
 - **Plugin docs:** [`openclaw-agentglue/README.md`](./openclaw-agentglue/README.md)
+
+## ⚖️ Disclaimer
+
+*This project is a personal open-source project developed in my personal capacity. It is not affiliated with, endorsed by, or representing any employer or organization I am associated with. All work on this project is performed on personal time and with personal resources.*
 
 ## 📄 License
 
