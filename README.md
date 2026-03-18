@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">AgentGlue</h1>
-<p align="center"><strong>Middleware orchestration for multi-agent systems.</strong></p>
+<p align="center"><strong>Middleware coordination for multi-agent systems.</strong></p>
 
 <p align="center">
   <a href="https://github.com/brickee/AgentGlue/releases"><img src="https://img.shields.io/github/v/release/brickee/AgentGlue?display_name=tag" alt="GitHub release" /></a>
@@ -96,14 +96,8 @@ If you want to remove the `plugins.allow` security warning, add this to `~/.open
 
 Plugin docs: [`openclaw-agentglue/README.md`](./openclaw-agentglue/README.md)
 
-### 2) Clone the repo
 
-```bash
-git clone https://github.com/brickee/AgentGlue.git
-cd AgentGlue
-```
-
-### 3) Install the Python package
+### 2) Install the Python package
 
 From PyPI:
 
