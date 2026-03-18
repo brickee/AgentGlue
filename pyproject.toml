@@ -9,7 +9,7 @@ description = "Thin runtime layer for multi-agent systems — cross-process dedu
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{name = "brickee"}]
-license = {text = "MIT"}
+license = "MIT"
 dependencies = []
 
 [project.optional-dependencies]
