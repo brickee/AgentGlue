@@ -46,11 +46,16 @@ Measured on the current **100-test benchmark suite** and **overlap-heavy multi-a
 
 ## 🧭 How it works
 
-<p align="center">
-  <img src="docs/how-it-works.svg" alt="How AgentGlue works" width="100%" />
-</p>
+```text
+Agents / orchestrator
+        ↓
+    AgentGlue
+(coordination middleware)
+        ↓
+Tools / APIs / files / state
+```
 
-<p align="center"><em>AgentGlue sits between the orchestrator and the tool layer, coordinating repeated work across agents and processes.</em></p>
+**AgentGlue sits in the middle**: agents keep their existing orchestration logic, tools keep their existing interfaces, and AgentGlue coordinates repeated work across both.
 
 ## 🛠 Install
 
