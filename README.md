@@ -136,7 +136,7 @@ print(glue.report())
 
 ## ⚖️ Disclaimer
 
-*This project is a personal open-source project developed in my personal capacity. It is not affiliated with, endorsed by, or representing any employer or organization I am associated with. All work on this project is performed on personal time and with personal resources.*
+*This project is a personal open-source project developed in authors' personal capacity. It is not affiliated with, endorsed by, or representing any employer or organization the authors are associated with. All work on this project is performed on personal time and with personal resources.*
 
 ## 📄 License
 
