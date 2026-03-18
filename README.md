@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/agentglue-banner.svg" alt="AgentGlue banner" width="100%" />
+  <img src="docs/agentglue-banner.PNG" alt="AgentGlue banner" width="100%" />
 </p>
 
 <h1 align="center">AgentGlue</h1>
