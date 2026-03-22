@@ -4,9 +4,10 @@
  * Cross-process dedup cache for multi-agent tool calls.
  *
  * Architecture:
- *  - Shadows built-in read/grep/glob tools with cache-aware versions
+ *  - Exposes agentglue_cached_* proxy tools that check cross-agent cache first
  *  - Cache check → sidecar execution → Node.js fallback (graceful degradation)
- *  - after_tool_call hook auto-caches other read-only tool results
+ *  - after_tool_call hook auto-caches ALL read-only tool results under built-in names
+ *  - Proxy tools read from the same cache keys as after_tool_call writes
  *  - Single sidecar process shared by all agents/sub-agents
  */
 
@@ -15,11 +16,20 @@ import * as fs from 'fs';
 import { spawn, ChildProcess, execSync } from 'child_process';
 import * as path from 'path';
 
-// Sidecar tool name for each shadowed built-in
+// Cache key mapping: proxy tool suffix → original built-in tool name
+// after_tool_call stores results under the built-in name (e.g. "read"),
+// so proxy tools must check under the same key.
+const BUILTIN_TOOL: Record<string, string> = {
+  read: 'read',
+  search: 'grep',
+  list: 'glob',
+};
+
+// Sidecar tool name for each proxy tool
 const SIDECAR_TOOL: Record<string, string> = {
   read: 'deduped_read_file',
-  grep: 'deduped_search',
-  glob: 'deduped_list_files',
+  search: 'deduped_search',
+  list: 'deduped_list_files',
 };
 
 // Tools that should never be cached (side-effectful or handled by us)
@@ -28,9 +38,9 @@ const SKIP_TOOLS = new Set([
   'send_telegram', 'send_whatsapp', 'send_discord',
   'notebook_edit', 'task_create', 'task_update',
   'agentglue_metrics', 'agentglue_health',
-  // Our shadow tools — caching is handled inside their execute(),
+  // Our proxy tools — caching is handled inside their execute(),
   // so after_tool_call must not double-cache them.
-  'read', 'grep', 'glob',
+  'agentglue_cached_read', 'agentglue_cached_search', 'agentglue_cached_list',
 ]);
 
 interface SidecarConfig {
@@ -339,61 +349,66 @@ const agentGluePlugin = {
         const start = Math.max(0, offset - 1);
         return lines.slice(start, start + limit).map((l, i) => `${String(start + i + 1).padStart(6)}\t${l}`).join('\n');
       },
-      grep: (params) => {
+      search: (params) => {
         const pattern = String(params.pattern || '');
         const filePath = String(params.path || params.repo_path || '.');
-        const glob = params.file_pattern ? `--glob '${params.file_pattern}'` : '';
-        const max = params.max_results ? `--max-count ${params.max_results}` : '';
+        const args: string[] = ['--no-heading', '--line-number'];
+        if (params.file_pattern) args.push('--glob', String(params.file_pattern));
+        if (params.max_results) args.push('--max-count', String(Number(params.max_results)));
+        args.push('--', pattern, filePath);
         try {
-          return execSync(`rg --no-heading --line-number ${max} ${glob} -- ${JSON.stringify(pattern)} ${JSON.stringify(filePath)}`, { encoding: 'utf-8', timeout: 30000 });
+          return execSync('rg ' + args.map(a => JSON.stringify(a)).join(' '), { encoding: 'utf-8', timeout: 30000 });
         } catch (e: any) {
           return e.stdout || '(no matches)';
         }
       },
-      glob: (params) => {
-        const dirPath = String(params.dir_path || params.path || '.');
-        const recursive = Boolean(params.recursive);
-        const includeHidden = Boolean(params.include_hidden);
-        const entries = fs.readdirSync(dirPath, { withFileTypes: true, recursive });
-        return entries
-          .filter((e) => includeHidden || !e.name.startsWith('.'))
-          .map((e) => {
-            const rel = e.parentPath ? path.join(e.parentPath, e.name) : path.join(dirPath, e.name);
-            return e.isDirectory() ? `${rel}/` : rel;
-          })
-          .join('\n');
+      list: (params) => {
+        const dirPath = String(params.path || params.dir_path || '.');
+        const globPattern = String(params.pattern || '*');
+        try {
+          const cmd = `find ${JSON.stringify(dirPath)} -name ${JSON.stringify(globPattern)} -maxdepth 10 2>/dev/null | head -500`;
+          return execSync(cmd, { encoding: 'utf-8', timeout: 15000 }).trim() || '(no matches)';
+        } catch (e: any) {
+          return e.stdout || '(no matches)';
+        }
       },
     };
 
-    // -- Shadow tools: replace built-in read/grep/glob with cache-aware versions --
-    const makeShadowTool = (toolName: string, description: string, paramsDef: any) => ({
-      name: toolName,
-      description,
+    // -- Proxy tools: agentglue_cached_* check cross-agent cache first --
+    // Cache keys use the ORIGINAL built-in tool name (e.g. "read") so that
+    // results cached by after_tool_call (which stores under event.toolName)
+    // are found by these proxy tools.
+    const makeProxyTool = (proxyName: string, description: string, paramsDef: any) => ({
+      name: `agentglue_cached_${proxyName}`,
+      description: `[AgentGlue] ${description} — checks cross-agent cache first.`,
       parameters: paramsDef,
       execute: async (_id: string, params: Record<string, unknown>) => {
-        const sidecarTool = SIDECAR_TOOL[toolName];
-        // 1. Check cross-agent cache
+        const cacheKey = BUILTIN_TOOL[proxyName];  // e.g. "read" — same as after_tool_call stores
+        const sidecarTool = SIDECAR_TOOL[proxyName];
+        // 1. Check cross-agent cache (keyed by built-in tool name)
         try {
-          const cached = await client.cacheCheck(sidecarTool, params);
+          const cached = await client.cacheCheck(cacheKey, params);
           if (cached.hit) return `[cache hit, age=${cached.age_s}s]\n${cached.result}`;
         } catch { /* fall through */ }
-        // 2. Try sidecar execution (reads file + stores in cache)
+        // 2. Try sidecar execution
         try {
-          return await client.call(sidecarTool, params);
+          const result = await client.call(sidecarTool, params);
+          // Store under built-in tool name for cross-agent benefit
+          client.cacheStore(cacheKey, params, result, cfg.cacheTTL).catch(() => {});
+          return result;
         } catch { /* fall through */ }
         // 3. Node.js fallback (graceful degradation when sidecar is down)
         try {
-          const result = nodeFallback[toolName](params);
-          // Best-effort cache store so other agents still benefit
-          client.cacheStore(sidecarTool, params, result, cfg.cacheTTL).catch(() => {});
+          const result = nodeFallback[proxyName](params);
+          client.cacheStore(cacheKey, params, result, cfg.cacheTTL).catch(() => {});
           return result;
         } catch (e: any) {
-          return `AgentGlue fallback error (${toolName}): ${e.message}`;
+          return `AgentGlue fallback error (${proxyName}): ${e.message}`;
         }
       },
     });
 
-    api.registerTool(makeShadowTool('read', 'Read a file (with cross-agent dedup cache)', {
+    api.registerTool(makeProxyTool('read', 'Read a file with cross-agent dedup cache', {
       type: 'object',
       properties: {
         file_path: { type: 'string', description: 'Absolute path to the file' },
@@ -401,9 +416,9 @@ const agentGluePlugin = {
         limit: { type: 'integer', description: 'Max lines to read', default: 200 },
       },
       required: ['file_path'],
-    }), { shadow: true });
+    }));
 
-    api.registerTool(makeShadowTool('grep', 'Search files by pattern (with cross-agent dedup cache)', {
+    api.registerTool(makeProxyTool('search', 'Search files by pattern with cross-agent dedup cache', {
       type: 'object',
       properties: {
         path: { type: 'string', description: 'File or directory to search in' },
@@ -412,18 +427,18 @@ const agentGluePlugin = {
         max_results: { type: 'integer', description: 'Max results', default: 50 },
       },
       required: ['pattern'],
-    }), { shadow: true });
+    }));
 
-    api.registerTool(makeShadowTool('glob', 'List files by glob pattern (with cross-agent dedup cache)', {
+    api.registerTool(makeProxyTool('list', 'List files/directories with cross-agent dedup cache', {
       type: 'object',
       properties: {
         path: { type: 'string', description: 'Directory to search in' },
-        pattern: { type: 'string', description: 'Glob pattern to match' },
+        pattern: { type: 'string', description: 'Glob pattern to match', default: '*' },
+        dir_path: { type: 'string', description: 'Absolute path to directory' },
         recursive: { type: 'boolean', description: 'Recursive listing', default: false },
         include_hidden: { type: 'boolean', description: 'Include hidden files', default: false },
       },
-      required: ['pattern'],
-    }), { shadow: true });
+    }));
 
     // -- Metrics tool --
     api.registerTool({
@@ -451,7 +466,7 @@ const agentGluePlugin = {
       },
     });
 
-    log('Plugin registered (v0.4.0, shadow tools + SQLite backend)');
+    log('Plugin registered (v0.4.0, proxy tools + SQLite backend)');
   },
 };
 

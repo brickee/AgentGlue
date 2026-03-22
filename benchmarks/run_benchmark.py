@@ -34,6 +34,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -48,8 +49,8 @@ RESULTS_DIR = SCRIPT_DIR / "results"
 
 # When AgentGlue plugin is active, prepend this to each sub-agent prompt so
 # the LLM uses the proxy tools (agentglue_cached_*) instead of the standard
-# read/grep/glob.  Only these proxy tools check the cross-agent cache; the
-# standard tools bypass it entirely.
+# read/grep/glob.  The proxy tools check the cross-agent cache first; the
+# standard tools' results are cached by after_tool_call but not deduplicated.
 AGENTGLUE_PROMPT_PREFIX = (
     "IMPORTANT: This environment has AgentGlue caching tools installed. "
     "You MUST use 'agentglue_cached_read' instead of 'read', "
@@ -86,7 +87,6 @@ def run_openclaw(args: list[str], timeout: int = 900) -> dict:
         # Strip ANSI escape sequences, then find JSON object.
         # OpenClaw output may have "[plugins] ..." preamble (where [ is
         # literal text, not JSON), so we look for '{' at line start.
-        import re
         clean = re.sub(r'\x1b\[[0-9;]*m', '', stdout)
         # Find the first line that starts with '{'
         for line in clean.split('\n'):
@@ -322,7 +322,13 @@ def parse_transcript(messages: list[dict]) -> dict:
                 # Check content blocks for cache hit markers
                 result_content = inner.get("content", []) or msg.get("content", [])
                 result_text = str(result_content)
-                is_cache_hit = "[cache hit" in result_text.lower() or '"cacheHit": true' in result_text or '"cache_hit": true' in result_text
+                # Match the exact plugin marker format: [cache hit, age=Ns]
+                # Avoid false positives from source code containing the template literal.
+                is_cache_hit = (
+                    bool(re.search(r'\[cache hit, age=[\d.]+s\]', result_text))
+                    or '"cacheHit": true' in result_text
+                    or '"cache_hit": true' in result_text
+                )
                 tool_calls.append({
                     "tool": tool_name,
                     "cache_hit": is_cache_hit,
@@ -339,8 +345,9 @@ def parse_transcript(messages: list[dict]) -> dict:
                             except (json.JSONDecodeError, ValueError):
                                 pass
 
-    # Tools that can participate in caching (standard + proxy).
-    # Only these are counted as "cache checks" for hit-rate calculation.
+    # Tools that participate in caching (standard + proxy).
+    # Standard tools: cached by after_tool_call hook.
+    # Proxy tools: check cache first, then execute.
     CACHEABLE_TOOLS = {
         "read", "grep", "glob", "search", "list",
         "agentglue_cached_read", "agentglue_cached_search", "agentglue_cached_list",
@@ -447,7 +454,6 @@ def _split_prompt_into_agents(prompt: str, num_agents: int) -> list[str]:
         - Agent 2: <task>
         Report combined findings.
     """
-    import re
     agent_prompts = []
     # Match lines starting with "- Agent N:" (with optional whitespace)
     pattern = re.compile(r"^\s*-\s*Agent\s+\d+:\s*", re.IGNORECASE)
@@ -471,9 +477,10 @@ def smoke_test_cache(timeout: int = 45) -> tuple[bool, str]:
     Returns (ok, detail_message).
     """
     sid = f"bench-smoke-{uuid.uuid4().hex[:8]}"
-    target = str(Path(__file__).resolve())  # read this script itself
+    # Use a small, stable file that won't contain '[cache hit' literally
+    target = str(SCRIPT_DIR / "tasks" / "simple.json")
     prompt = (
-        f"Use the agentglue_cached_read tool to read {target} (limit 10 lines). "
+        f"Use the agentglue_cached_read tool to read {target} (limit 5 lines). "
         f"Then use agentglue_cached_read again with the exact same arguments. "
         f"Report whether the second read shows '[cache hit'."
     )
@@ -499,7 +506,6 @@ def smoke_test_cache(timeout: int = 45) -> tuple[bool, str]:
     if transcript["cache_hits"] > 0:
         return True, f"cache working: {transcript['cache_hits']} hits in {cached_read_calls} calls"
 
-    # Even without string-detected hits, check metrics delta
     return False, (
         f"agentglue_cached_read called {cached_read_calls}x but 0 cache hits detected. "
         f"Cache may not be persisting between calls."
@@ -539,10 +545,9 @@ def run_task(task: dict, mode: str, model: str | None, timeout: int, suite: str 
         print(f"  ⚠ Expected {num_agents} agents but parsed {actual_agents} from prompt")
 
     # In agentglue mode, prepend instruction to use proxy tools.
-    # Without this, agents use standard read/grep which bypass the cache
-    # entirely (after_tool_call stores under "read" key but proxy tools
-    # check under "deduped_read_file" key — different cache namespace).
-    if mode == "agentglue":
+    # Proxy tools (agentglue_cached_*) check the cross-agent cache first;
+    # standard tools are cached by after_tool_call but not deduplicated.
+    if mode == "agentglue" and AGENTGLUE_PROMPT_PREFIX:
         agent_prompts = [AGENTGLUE_PROMPT_PREFIX + p for p in agent_prompts]
 
     # Capture AgentGlue metrics before (if in agentglue mode)
