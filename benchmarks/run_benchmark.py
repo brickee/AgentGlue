@@ -172,6 +172,30 @@ def _write_openclaw_config(config: dict) -> None:
         json.dump(config, f, indent=2)
 
 
+SIDECAR_URL = "http://127.0.0.1:8765"
+
+
+def flush_agentglue_cache() -> bool:
+    """Flush the AgentGlue sidecar cache between tasks for per-task isolation.
+
+    Returns True on success.
+    """
+    import urllib.request
+    try:
+        req = urllib.request.Request(
+            f"{SIDECAR_URL}/cache/flush",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+            return data.get("flushed", False)
+    except Exception as e:
+        print(f"  ⚠ Failed to flush AgentGlue cache: {e}")
+        return False
+
+
 def set_agentglue_enabled(enabled: bool) -> bool:
     """Enable or disable the AgentGlue plugin in openclaw.json.
 
@@ -241,23 +265,19 @@ def restart_gateway(wait: int = 8) -> bool:
 
 
 def get_agentglue_metrics() -> dict | None:
-    """Fetch AgentGlue cache metrics if available."""
-    r = run_openclaw(
-        ["agent", "--message", "Call the agentglue_metrics tool and return its raw JSON output. Nothing else.", "--json", "--timeout", "30"],
-        timeout=60,
-    )
-    if r["ok"] and isinstance(r["data"], dict):
-        # Try to extract metrics from agent response
-        reply = r["data"].get("reply", "") or r["data"].get("message", "") or str(r["data"])
-        try:
-            # Find JSON in the reply
-            start = reply.find("{")
-            end = reply.rfind("}") + 1
-            if start >= 0 and end > start:
-                return json.loads(reply[start:end])
-        except (json.JSONDecodeError, ValueError):
-            pass
-    return None
+    """Fetch AgentGlue cache metrics directly from the sidecar HTTP endpoint."""
+    import urllib.request
+    try:
+        req = urllib.request.Request(
+            f"{SIDECAR_URL}/cache/stats",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return json.loads(resp.read())
+    except Exception:
+        return None
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -297,8 +317,6 @@ def parse_transcript(messages: list[dict]) -> dict:
     total_input_tokens = 0
     total_output_tokens = 0
     child_session_keys = []
-    seen_tool_ids = set()  # deduplicate by tool_use_id
-
     for msg in messages:
         msg_type = msg.get("type", "")
 
@@ -323,12 +341,23 @@ def parse_transcript(messages: list[dict]) -> dict:
                 result_content = inner.get("content", []) or msg.get("content", [])
                 result_text = str(result_content)
                 # Match the exact plugin marker format: [cache hit, age=Ns]
-                # Avoid false positives from source code containing the template literal.
-                is_cache_hit = (
-                    bool(re.search(r'\[cache hit, age=[\d.]+s\]', result_text))
-                    or '"cacheHit": true' in result_text
-                    or '"cache_hit": true' in result_text
-                )
+                # Only match at the START of content to avoid false positives
+                # from source code or documentation containing the template literal.
+                is_cache_hit = False
+                if isinstance(result_content, list):
+                    for block in result_content:
+                        if isinstance(block, dict) and block.get("type") == "text":
+                            text = block.get("text", "")
+                            if text.startswith("[cache hit, age="):
+                                is_cache_hit = True
+                                break
+                if not is_cache_hit:
+                    # Fallback: regex on full text (catches non-standard formats)
+                    is_cache_hit = (
+                        bool(re.match(r'^\[cache hit, age=[\d.]+s\]', result_text))
+                        or '"cacheHit": true' in result_text
+                        or '"cache_hit": true' in result_text
+                    )
                 tool_calls.append({
                     "tool": tool_name,
                     "cache_hit": is_cache_hit,
@@ -349,8 +378,9 @@ def parse_transcript(messages: list[dict]) -> dict:
     # Standard tools: cached by after_tool_call hook.
     # Proxy tools: check cache first, then execute.
     CACHEABLE_TOOLS = {
-        "read", "grep", "glob", "search", "list",
+        "read", "grep", "glob", "search", "list", "bash", "web_fetch", "web_search",
         "agentglue_cached_read", "agentglue_cached_search", "agentglue_cached_list",
+        "agentglue_cached_exec", "agentglue_cached_web_fetch", "agentglue_cached_web_search",
     }
 
     # Aggregate by tool type
@@ -544,16 +574,29 @@ def run_task(task: dict, mode: str, model: str | None, timeout: int, suite: str 
     if actual_agents != num_agents:
         print(f"  ⚠ Expected {num_agents} agents but parsed {actual_agents} from prompt")
 
+    # Flush sidecar cache between tasks so each task starts with a clean slate.
+    # Flush also resets metrics counters, so metrics_before should be all zeros.
+    if mode == "agentglue":
+        flushed = flush_agentglue_cache()
+        if flushed:
+            print("  Cache flushed for task isolation")
+        else:
+            print("  ⚠ Cache flush failed — sidecar may be down. Metrics for this task will be unreliable.")
+
     # In agentglue mode, prepend instruction to use proxy tools.
     # Proxy tools (agentglue_cached_*) check the cross-agent cache first;
     # standard tools are cached by after_tool_call but not deduplicated.
     if mode == "agentglue" and AGENTGLUE_PROMPT_PREFIX:
         agent_prompts = [AGENTGLUE_PROMPT_PREFIX + p for p in agent_prompts]
 
-    # Capture AgentGlue metrics before (if in agentglue mode)
+    # Capture AgentGlue metrics before (if in agentglue mode).
+    # After a successful flush, these should all be zero.  If flush failed,
+    # metrics_before captures the stale state so the delta is still meaningful.
     metrics_before = None
     if mode == "agentglue":
         metrics_before = get_agentglue_metrics()
+        if metrics_before is None:
+            print("  ⚠ Cannot reach sidecar for metrics — sidecar_cache_hits will be 0")
 
     # Spawn all sub-agents as parallel CLI processes
     start_time = time.time()
@@ -1035,6 +1078,9 @@ def run_compare_mode(args):
 
     print("  [OK] AgentGlue plugin is active")
 
+    # Flush cache before smoke test so it starts clean
+    flush_agentglue_cache()
+
     # Smoke test: verify caching actually works end-to-end before running
     # the full suite.  This catches key-mismatch bugs, sidecar failures, etc.
     print("  Running cache smoke test...", end="", flush=True)
@@ -1179,6 +1225,7 @@ def main():
 
     # Smoke test for agentglue mode
     if args.mode == "agentglue":
+        flush_agentglue_cache()
         print("  Running cache smoke test...", end="", flush=True)
         smoke_ok, smoke_detail = smoke_test_cache()
         if smoke_ok:
