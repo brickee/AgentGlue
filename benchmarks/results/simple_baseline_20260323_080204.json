@@ -1,0 +1,873 @@
+{
+  "generated_at": "2026-03-23T08:02:04.794404",
+  "suite": "simple",
+  "mode": "baseline",
+  "model": "default",
+  "total_tasks": 30,
+  "total_time_s": 1272.7,
+  "plugin_active": false,
+  "tasks": [
+    {
+      "task_id": "S001",
+      "task_name": "Runtime public API vs private helpers",
+      "category": "same-file-different-questions",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S001-baseline-f66dd995",
+      "success": true,
+      "wall_time_s": 23.46,
+      "total_tool_calls": 7,
+      "tool_counts": {
+        "read": 7
+      },
+      "cache_hits": 0,
+      "cache_checks": 7,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 28298,
+        "output": 867,
+        "total": 29165
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S002",
+      "task_name": "Dedup class hierarchy vs error handling",
+      "category": "same-file-different-questions",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S002-baseline-b5c8731e",
+      "success": true,
+      "wall_time_s": 25.29,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "read": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 28048,
+        "output": 712,
+        "total": 28760
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S003",
+      "task_name": "Shared memory read vs write paths",
+      "category": "same-file-different-questions",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S003-baseline-7b1b5831",
+      "success": true,
+      "wall_time_s": 56.96,
+      "total_tool_calls": 6,
+      "tool_counts": {
+        "read": 4,
+        "exec": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 4,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 35175,
+        "output": 2761,
+        "total": 37936
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S011",
+      "task_name": "Search 'async' in middleware vs full src",
+      "category": "same-search-different-scopes",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S011-baseline-b4e1d2c3",
+      "success": true,
+      "wall_time_s": 18.72,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "exec": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 0,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 22912,
+        "output": 484,
+        "total": 23396
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S012",
+      "task_name": "Search 'import' in core vs full src",
+      "category": "same-search-different-scopes",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S012-baseline-2c48d33b",
+      "success": true,
+      "wall_time_s": 39.84,
+      "total_tool_calls": 3,
+      "tool_counts": {
+        "exec": 3
+      },
+      "cache_hits": 0,
+      "cache_checks": 0,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 3459,
+        "output": 1896,
+        "total": 5355
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S013",
+      "task_name": "Search 'sqlite' in middleware vs full repo",
+      "category": "same-search-different-scopes",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S013-baseline-1910337c",
+      "success": true,
+      "wall_time_s": 67.33,
+      "total_tool_calls": 12,
+      "tool_counts": {
+        "exec": 3,
+        "read": 9
+      },
+      "cache_hits": 0,
+      "cache_checks": 9,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 55983,
+        "output": 3941,
+        "total": 59924
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S021",
+      "task_name": "Parallel read of three middleware files",
+      "category": "parallel-file-reads",
+      "num_agents": 3,
+      "expected_overlap": "medium",
+      "mode": "baseline",
+      "session_id": "bench-S021-baseline-b064de70",
+      "success": true,
+      "wall_time_s": 26.55,
+      "total_tool_calls": 3,
+      "tool_counts": {
+        "read": 3
+      },
+      "cache_hits": 0,
+      "cache_checks": 3,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 37007,
+        "output": 535,
+        "total": 37542
+      },
+      "sub_agents_spawned": 3,
+      "sub_session_count": 3,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S022",
+      "task_name": "Parallel read of three core files",
+      "category": "parallel-file-reads",
+      "num_agents": 3,
+      "expected_overlap": "medium",
+      "mode": "baseline",
+      "session_id": "bench-S022-baseline-0bd96aa2",
+      "success": true,
+      "wall_time_s": 37.62,
+      "total_tool_calls": 3,
+      "tool_counts": {
+        "read": 3
+      },
+      "cache_hits": 0,
+      "cache_checks": 3,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 25610,
+        "output": 1192,
+        "total": 26802
+      },
+      "sub_agents_spawned": 3,
+      "sub_session_count": 3,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S023",
+      "task_name": "Parallel read of core recorder, events, allocator",
+      "category": "parallel-file-reads",
+      "num_agents": 3,
+      "expected_overlap": "medium",
+      "mode": "baseline",
+      "session_id": "bench-S023-baseline-740e9616",
+      "success": true,
+      "wall_time_s": 43.71,
+      "total_tool_calls": 3,
+      "tool_counts": {
+        "read": 3
+      },
+      "cache_hits": 0,
+      "cache_checks": 3,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 25069,
+        "output": 1454,
+        "total": 26523
+      },
+      "sub_agents_spawned": 3,
+      "sub_session_count": 3,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S031",
+      "task_name": "Runtime imports dedup \u2014 interface check",
+      "category": "cross-reference-check",
+      "num_agents": 2,
+      "expected_overlap": "medium",
+      "mode": "baseline",
+      "session_id": "bench-S031-baseline-796f200d",
+      "success": true,
+      "wall_time_s": 31.21,
+      "total_tool_calls": 4,
+      "tool_counts": {
+        "read": 4
+      },
+      "cache_hits": 0,
+      "cache_checks": 4,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 38910,
+        "output": 1279,
+        "total": 40189
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S032",
+      "task_name": "Runtime imports shared_memory \u2014 interface check",
+      "category": "cross-reference-check",
+      "num_agents": 2,
+      "expected_overlap": "medium",
+      "mode": "baseline",
+      "session_id": "bench-S032-baseline-52ca9611",
+      "success": true,
+      "wall_time_s": 26.54,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "read": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 26416,
+        "output": 816,
+        "total": 27232
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S033",
+      "task_name": "Runtime imports task_lock \u2014 interface check",
+      "category": "cross-reference-check",
+      "num_agents": 2,
+      "expected_overlap": "medium",
+      "mode": "baseline",
+      "session_id": "bench-S033-baseline-7fdcc636",
+      "success": true,
+      "wall_time_s": 28.89,
+      "total_tool_calls": 3,
+      "tool_counts": {
+        "read": 2,
+        "exec": 1
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 25746,
+        "output": 752,
+        "total": 26498
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S041",
+      "task_name": "Dedup security vs performance review",
+      "category": "duplicate-review",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S041-baseline-7a820c99",
+      "success": true,
+      "wall_time_s": 56.37,
+      "total_tool_calls": 9,
+      "tool_counts": {
+        "read": 6,
+        "exec": 3
+      },
+      "cache_hits": 0,
+      "cache_checks": 6,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 47261,
+        "output": 3015,
+        "total": 50276
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S042",
+      "task_name": "Shared memory security vs performance review",
+      "category": "duplicate-review",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S042-baseline-5ee119f9",
+      "success": true,
+      "wall_time_s": 60.07,
+      "total_tool_calls": 4,
+      "tool_counts": {
+        "read": 4
+      },
+      "cache_hits": 0,
+      "cache_checks": 4,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 26089,
+        "output": 3773,
+        "total": 29862
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S043",
+      "task_name": "Task lock security vs performance review",
+      "category": "duplicate-review",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S043-baseline-4284a857",
+      "success": true,
+      "wall_time_s": 51.72,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "read": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 25807,
+        "output": 2953,
+        "total": 28760
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S051",
+      "task_name": "Search async in middleware, then read dedup",
+      "category": "search-then-read",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S051-baseline-3343a9d7",
+      "success": true,
+      "wall_time_s": 33.54,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "exec": 1,
+        "read": 1
+      },
+      "cache_hits": 0,
+      "cache_checks": 1,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 25465,
+        "output": 967,
+        "total": 26432
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S052",
+      "task_name": "Search class in core, then read allocator",
+      "category": "search-then-read",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S052-baseline-e9018541",
+      "success": true,
+      "wall_time_s": 20.39,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "exec": 1,
+        "read": 1
+      },
+      "cache_hits": 0,
+      "cache_checks": 1,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 23733,
+        "output": 721,
+        "total": 24454
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S053",
+      "task_name": "Search import in src, then read runtime",
+      "category": "search-then-read",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S053-baseline-c4b263c4",
+      "success": true,
+      "wall_time_s": 48.04,
+      "total_tool_calls": 3,
+      "tool_counts": {
+        "exec": 2,
+        "read": 1
+      },
+      "cache_hits": 0,
+      "cache_checks": 1,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 25427,
+        "output": 1611,
+        "total": 27038
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S061",
+      "task_name": "Summarize middleware module \u2014 3 agents",
+      "category": "multi-file-summary",
+      "num_agents": 3,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S061-baseline-af1c602b",
+      "success": true,
+      "wall_time_s": 55.2,
+      "total_tool_calls": 13,
+      "tool_counts": {
+        "read": 8,
+        "exec": 5
+      },
+      "cache_hits": 0,
+      "cache_checks": 8,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 40320,
+        "output": 2762,
+        "total": 43082
+      },
+      "sub_agents_spawned": 3,
+      "sub_session_count": 3,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S062",
+      "task_name": "Summarize core module \u2014 3 agents",
+      "category": "multi-file-summary",
+      "num_agents": 3,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S062-baseline-079685da",
+      "success": true,
+      "wall_time_s": 42.98,
+      "total_tool_calls": 14,
+      "tool_counts": {
+        "read": 11,
+        "exec": 3
+      },
+      "cache_hits": 0,
+      "cache_checks": 11,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 39132,
+        "output": 2759,
+        "total": 41891
+      },
+      "sub_agents_spawned": 3,
+      "sub_session_count": 3,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S063",
+      "task_name": "Summarize core observability \u2014 recorder, metrics, events",
+      "category": "multi-file-summary",
+      "num_agents": 3,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S063-baseline-f23da90b",
+      "success": true,
+      "wall_time_s": 92.32,
+      "total_tool_calls": 23,
+      "tool_counts": {
+        "read": 14,
+        "exec": 9
+      },
+      "cache_hits": 0,
+      "cache_checks": 14,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 66974,
+        "output": 5670,
+        "total": 72644
+      },
+      "sub_agents_spawned": 3,
+      "sub_session_count": 3,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S071",
+      "task_name": "Test vs source \u2014 dedup middleware",
+      "category": "test-vs-source",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S071-baseline-293058fe",
+      "success": true,
+      "wall_time_s": 31.44,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "read": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 27021,
+        "output": 1162,
+        "total": 28183
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S072",
+      "task_name": "Test vs source \u2014 sidecar server",
+      "category": "test-vs-source",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S072-baseline-81d6fac5",
+      "success": true,
+      "wall_time_s": 68.98,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "read": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 34187,
+        "output": 3302,
+        "total": 37489
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S073",
+      "task_name": "Test vs source \u2014 runtime module",
+      "category": "test-vs-source",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S073-baseline-a420e603",
+      "success": true,
+      "wall_time_s": 60.58,
+      "total_tool_calls": 15,
+      "tool_counts": {
+        "read": 11,
+        "exec": 4
+      },
+      "cache_hits": 0,
+      "cache_checks": 11,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 51238,
+        "output": 2346,
+        "total": 53584
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S081",
+      "task_name": "Config + code \u2014 pyproject.toml vs runtime imports",
+      "category": "config-plus-code",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S081-baseline-08c21e1a",
+      "success": true,
+      "wall_time_s": 23.41,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "read": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 24941,
+        "output": 546,
+        "total": 25487
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S082",
+      "task_name": "Config + code \u2014 package.json vs index.ts imports",
+      "category": "config-plus-code",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S082-baseline-653a0775",
+      "success": true,
+      "wall_time_s": 18.58,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "read": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 19596,
+        "output": 339,
+        "total": 19935
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S083",
+      "task_name": "Config + code \u2014 pyproject.toml version vs README version",
+      "category": "config-plus-code",
+      "num_agents": 2,
+      "expected_overlap": "high",
+      "mode": "baseline",
+      "session_id": "bench-S083-baseline-81b23d5d",
+      "success": true,
+      "wall_time_s": 20.05,
+      "total_tool_calls": 2,
+      "tool_counts": {
+        "read": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 2,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 24354,
+        "output": 471,
+        "total": 24825
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S091",
+      "task_name": "Full overlap \u2014 runtime.py three questions",
+      "category": "full-overlap-stress",
+      "num_agents": 3,
+      "expected_overlap": "very-high",
+      "mode": "baseline",
+      "session_id": "bench-S091-baseline-82a29f86",
+      "success": true,
+      "wall_time_s": 35.07,
+      "total_tool_calls": 4,
+      "tool_counts": {
+        "read": 3,
+        "exec": 1
+      },
+      "cache_hits": 0,
+      "cache_checks": 3,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 40353,
+        "output": 1171,
+        "total": 41524
+      },
+      "sub_agents_spawned": 3,
+      "sub_session_count": 3,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S092",
+      "task_name": "Full overlap \u2014 dedup.py + shared_memory.py two questions",
+      "category": "full-overlap-stress",
+      "num_agents": 2,
+      "expected_overlap": "very-high",
+      "mode": "baseline",
+      "session_id": "bench-S092-baseline-eaee0ede",
+      "success": true,
+      "wall_time_s": 48.75,
+      "total_tool_calls": 6,
+      "tool_counts": {
+        "read": 4,
+        "exec": 2
+      },
+      "cache_hits": 0,
+      "cache_checks": 4,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 36255,
+        "output": 2677,
+        "total": 38932
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    },
+    {
+      "task_id": "S093",
+      "task_name": "Full overlap \u2014 server.py + index.ts two questions",
+      "category": "full-overlap-stress",
+      "num_agents": 2,
+      "expected_overlap": "very-high",
+      "mode": "baseline",
+      "session_id": "bench-S093-baseline-0f3ee450",
+      "success": true,
+      "wall_time_s": 78.94,
+      "total_tool_calls": 4,
+      "tool_counts": {
+        "read": 4
+      },
+      "cache_hits": 0,
+      "cache_checks": 4,
+      "cache_hit_rate": 0.0,
+      "sidecar_cache_hits": 0,
+      "tokens": {
+        "input": 48458,
+        "output": 4346,
+        "total": 52804
+      },
+      "sub_agents_spawned": 2,
+      "sub_session_count": 2,
+      "agentglue_metrics_delta": {},
+      "errors": ""
+    }
+  ],
+  "summary": {
+    "successful": 30,
+    "failed": 0,
+    "total_wall_time_s": 1272.5,
+    "total_tool_calls": 161,
+    "total_tokens": 1036524,
+    "total_cache_hits": 0,
+    "total_cache_checks": 119
+  }
+}
