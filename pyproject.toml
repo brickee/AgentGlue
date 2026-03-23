@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentglue"
-version = "0.3.2"
+version = "0.4.0"
 description = "Thin runtime layer for multi-agent systems — cross-process dedup, TTL cache, single-flight, SQLite backend, and observability"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{name = "brickee"}]
-license = "MIT"
+license = {text = "MIT"}
 dependencies = []
 
 [project.optional-dependencies]
